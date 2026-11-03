@@ -258,14 +258,14 @@ body[data-mode=walk] #left,body[data-mode=walk] #card{display:none}
    <div class="route" style="--c:var(--pub)">
     <div class="rh"><label class="sw nm" style="--c:var(--pub)"><input type="checkbox" id="pPub" checked><em>P</em>Public</label>
      <button class="walkb" data-walk="pub" style="--c:var(--pub)"><svg class="i"><use href="#i-play"/></svg>Walk</button></div>
-    <div class="steps"><span>Entry</span><span>Truck</span><span>Car</span><span>Bike</span><span>SUV</span><span>Exit</span></div>
+    <div class="steps"><span>Entry</span><span>Truck</span><span>Car</span><span>Bike</span><span>Exit</span></div>
    </div>
    <div class="route" style="--c:var(--oem)">
     <div class="rh"><label class="sw nm" style="--c:var(--oem)"><input type="checkbox" id="pOem" checked><em>O</em>OEMs</label></div>
     <div class="steps"><span>Vehicles</span><span>Reception</span><span>Lounge</span><span>Research room</span></div>
     <div class="sub" style="--c:var(--oemA)"><label class="sw nm" style="--c:var(--oemA)"><input type="checkbox" id="pOemA" checked><i></i>A · Meeting rooms</label>
      <button class="walkb" data-walk="oemA"><svg class="i"><use href="#i-play"/></svg>Walk</button></div>
-    <div class="sub" style="--c:var(--oemB)"><label class="sw nm" style="--c:var(--oemB)"><input type="checkbox" id="pOemB" checked><i></i>B · Mezzanine → exit</label>
+    <div class="sub" style="--c:var(--oemB)"><label class="sw nm" style="--c:var(--oemB)"><input type="checkbox" id="pOemB" checked><i></i>B · Mezzanine → east exit</label>
      <button class="walkb" data-walk="oemB"><svg class="i"><use href="#i-play"/></svg>Walk</button></div>
    </div>
    <div class="opts">
@@ -368,66 +368,76 @@ const H1=2.5, H2=5.0, SLAB=0.15, EYE=1.65, SQFT=10.7639;
 const XW=6.0, XE=27.0, ZB=9.0, ZS=19.0, X903=mx(903);
 const rect=(x0,y0,x1,y1)=>({x0:mx(x0),z0:mz(y0),x1:mx(x1),z1:mz(y1)});
 
-/* Interior room rectangles (clear floor area) */
+/* ---- Updated ground-floor plan (Nov 2026): research room becomes L-shaped with a walled north-east wing,
+        the SUV is removed, the store room becomes an east strip holding Stair 2, and the media room is entered
+        from the lounge and gains a 6-seat meeting table. Values below are in metres unless built with rect(). ---- */
+const R=(x0,z0,x1,z1)=>({x0,z0,x1,z1});
+/* Interior room rectangles (clear floor area). The research room is L-shaped: RES_TILES lists its three parts. */
 const ROOM={
   lounge:  rect(533,640,903,960),
   mr1:     rect(533,970,682,1167),
   mr2:     rect(691,970,901,1167),
-  research:rect(915,802,1670,1167),
-  media:   rect(915,640,1123,787),
-  store:   rect(1135,640,1298,787),
+  research:R(13.12,12.0,24.93,18.76),
+  media:   R(13.12,9.23,19.14,11.89),
+  store:   R(25.17,9.23,26.77,18.76),
 };
+const RES_TILES=[R(13.12,12.0,24.93,18.76),R(19.26,3.24,24.93,12.0),R(24.93,3.24,26.77,9.0)];
+const RES_AREA=RES_TILES.reduce((a,r)=>a+(r.x1-r.x0)*(r.z1-r.z0),0);
 
-/* Ground-floor walls as pixel rectangles [x0,y0,x1,y1] (gaps = doors / exit) */
+/* Ground-floor walls as metre rectangles {x0,z0,x1,z1} (gaps = doors / openings) */
 const WALLS_G=[
-  [520,627,549,640],[598,627,1580,640],          // north wall (lounge door gap 549-598, stair-2 exit gap 1580-1683)
-  [520,627,533,1180],[520,1167,1683,1180],[1670,627,1683,1180], // west, south, east
-  [903,640,915,820],[903,930,915,1167],          // media / research west wall (double-door gap 820-930)
-  [960,788,1250,802],[1298,788,1670,802],        // research north wall (media door 915-960, store door 1250-1298)
-  [1123,640,1135,802],[1298,640,1310,802],       // media|store and store|stair-2 hall
-  [520,960,631,970],[676,960,697,970],[742,960,903,970],[682,970,691,1167], // meeting rooms
+  rect(520,627,549,640), R(7.38,9.0,19.26,9.23),            // north wall west of / east of the lounge entrance door
+  rect(520,627,533,1180), rect(520,1167,1683,1180),         // west, south
+  R(19.02,3.02,19.26,9.0), R(19.02,3.02,26.99,3.24),        // north-east research wing: west + north walls (closed to the exhibition floor)
+  R(26.77,3.24,26.99,9.25), R(26.77,10.06,26.99,18.99),     // east wall (store service door 9.25-10.06)
+  R(24.93,9.0,26.77,9.23), R(24.93,9.23,25.17,18.76),       // store strip: north + west walls
+  R(12.9,9.23,13.12,11.0), R(12.9,11.87,13.12,12.49), rect(903,930,915,1167), // lounge east wall (media door, research double door)
+  R(13.12,11.88,19.26,12.0), R(19.14,9.23,19.26,11.88),     // media room: south + east walls
+  rect(520,960,631,970), rect(676,960,697,970), rect(742,960,903,970), rect(682,970,691,1167), // meeting rooms
 ];
 /* Mezzanine-level perimeter walls (2.5 -> 5.0 m) */
-const WALLS_M=[[903,1167,1683,1180],[1670,627,1683,1180]];
+const WALLS_M=[rect(903,1167,1683,1180),rect(1670,627,1683,1180)];
 
 const DOORS=[
   {id:'D1',name:'Lounge entrance door',cx:mx(573.5),cz:mz(633.5),w:.88,ori:'h',hinge:-1,into:1},
-  {id:'D2',name:'Media room door',cx:mx(937.5),cz:mz(795),w:.8,ori:'h',hinge:1,into:-1},
-  {id:'D3',name:'Store room door',cx:mx(1274),cz:mz(795),w:.86,ori:'h',hinge:1,into:-1},
+  {id:'D2',name:'Media room door (from lounge)',cx:13.01,cz:11.435,w:.86,ori:'v',hinge:1,into:1},
+  {id:'D3',name:'Store room service door (east wall)',cx:26.88,cz:9.655,w:.8,ori:'v',hinge:-1,into:-1},
   {id:'D4',name:'Meeting room 1 door',cx:mx(653.5),cz:mz(965),w:.8,ori:'h',hinge:-1,into:1},
   {id:'D5',name:'Meeting room 2 door',cx:mx(719.5),cz:mz(965),w:.8,ori:'h',hinge:1,into:1},
   {id:'D6',name:'Research room double door',cx:mx(909),cz:mz(875),w:1.98,ori:'v',double:true,into:-1},
 ];
 
-/* Stairs: dir +1 climbs towards +x, -1 climbs towards -x. 17 risers of 147 mm. */
+/* Stairs: axis = direction of travel; dir +1 climbs towards +axis. 17 risers of 147 mm. */
 const NSTEP=17;
 const STAIRS=[
-  {id:'S1',name:'Stair 1 – up to Mezzanine',x0:mx(636),x1:mx(903),z0:mz(640),z1:mz(738),dir:1},
-  {id:'S2',name:'Stair 2 – down to exit',x0:mx(1307),x1:mx(1572),z0:mz(640),z1:mz(738),dir:-1},
+  {id:'S1',name:'Stair 1 – up to Mezzanine',x0:mx(636),x1:mx(903),z0:mz(640),z1:mz(738),dir:1,axis:'x'},
+  {id:'S2',name:'Stair 2 – down to store & service exit',x0:25.17,x1:26.77,z0:12.06,z1:16.9,dir:1,axis:'z'},
 ];
-const stairY=(s,x)=>H1*clamp(s.dir>0?(x-s.x0)/(s.x1-s.x0):(s.x1-x)/(s.x1-s.x0),0,1);
+const stairT=(s,x,z)=>{ const t=s.axis==='z'?(z-s.z0)/(s.z1-s.z0):(x-s.x0)/(s.x1-s.x0); return clamp(s.dir>0?t:1-t,0,1); };
+const stairY=(s,x,z)=>H1*stairT(s,x,z);
 
 /* Slabs at +2.5 m (polygons in x,z) */
 const Z_SPLIT=mz(960);
-const SLAB_MEZZ=[[X903,ZB],[mx(1307),ZB],[mx(1307),mz(732)],[mx(1580),mz(732)],[mx(1580),ZB],[XE,ZB],[XE,ZS],[X903,ZS]];
+const S2=STAIRS[1];
+const SLAB_MEZZ=[[X903,ZB],[XE,ZB],[XE,S2.z0],[S2.x0,S2.z0],[S2.x0,S2.z1],[XE,S2.z1],[XE,ZS],[X903,ZS]];
 const SLAB_LOUNGE=[[XW,ZB],[mx(636),ZB],[mx(636),mz(738)],[X903,mz(738)],[X903,Z_SPLIT],[XW,Z_SPLIT]];
 const SLAB_MEET=[[XW,Z_SPLIT],[X903,Z_SPLIT],[X903,ZS],[XW,ZS]];
+const SLAB_WING=[[19.02,3.02],[XE,3.02],[XE,ZB],[19.02,ZB]];
 
-/* Vehicles: head = heading in degrees, direction (cos,sin) in (x,z) */
+/* Vehicles: head = heading in degrees, direction (cos,sin) in (x,z). The SUV is no longer on the plan. */
 const VEH={
   car:  {x:mx(775), z:mz(393),head:42},
   bike: {x:mx(1140),z:mz(395),head:43},
-  suv:  {x:mx(1497),z:mz(400),head:45},
   truck:{x:mx(355), z:mz(683),head:-90},
 };
 const ZONES=[
   {id:'Z1',x:mx(730), z:mz(347),hd:277*K,col:0x4f6d8a},
-  {id:'Z2',x:mx(1107),z:mz(362),hd:237*K,col:0x7a5c8e},
-  {id:'Z3',x:mx(1457),z:mz(360),hd:256*K,col:0x9c7a3c},
+  {id:'Z2',x:mx(1107),z:mz(362),hd:237*K,col:0x7a5c8e,clipX:19.0},
 ];
 const RECEPTION=[ {x0:mx(632),z0:mz(522),x1:mx(780),z1:mz(547)}, {x0:mx(755),z0:mz(522),x1:mx(780),z1:mz(598)} ];
 const PANTRY=[ {x0:mx(1173),z0:mz(638),x1:mx(1207),z1:mz(810)}, {x0:mx(1173),z0:mz(778),x1:mx(1410),z1:mz(810)} ];
-const TABLES=[922,1085].flatMap(y=>[1116,1269,1422,1575].map(x=>[mx(x),mz(y)]));
+/* mezzanine café tables: columns shifted west to clear the new Stair 2 opening on the east side */
+const TABLES=[mz(922),mz(1085)].flatMap(z=>[15.6,18.2,20.8,23.4].map(x=>[x,z]));
 const sqm=r=>(r.x1-r.x0)*(r.z1-r.z0);
 /* ============================ Renderer / scene ============================ */
 const $=s=>document.querySelector(s), $$=s=>[...document.querySelectorAll(s)];
@@ -517,9 +527,8 @@ function polyMesh(pts,thick,top,mat){ // polygon in (x,z), top face at y=top, ex
   const s=new THREE.Shape(pts.map(p=>new THREE.Vector2(p[0],p[1])));
   const g=new THREE.ExtrudeGeometry(s,{depth:thick,bevelEnabled:false}); g.rotateX(Math.PI/2);
   const m=new THREE.Mesh(g,mat); m.position.y=top; m.castShadow=m.receiveShadow=true; return m; }
-function pxBox(r,y0,y1,mat,parent){ // wall from pixel rect
-  const x0=mx(r[0]),x1=mx(r[2]),z0=mz(r[1]),z1=mz(r[3]);
-  return box(x1-x0,y1-y0,z1-z0,mat,(x0+x1)/2,y0,(z0+z1)/2,parent); }
+function pxBox(r,y0,y1,mat,parent){ // wall from a metre rect {x0,z0,x1,z1}
+  return box(r.x1-r.x0,y1-y0,r.z1-r.z0,mat,(r.x0+r.x1)/2,y0,(r.z0+r.z1)/2,parent); }
 function label3(txt,size=64){ return txt; }
 
 /* ============================ Scene graph ============================ */
@@ -615,10 +624,10 @@ const grainTex=canvasTex(256,(g,S)=>{ g.fillStyle='#808080'; g.fillRect(0,0,S,S)
 
 function rep(t,x,y){ const c=t.clone(); c.repeat.set(x,y); c.needsUpdate=true; return c; }
 const OAK=oakTex(), OAK_L=oakTex([222,196,158]);
-/* room floors: each box top uses 0..1 UVs, so repeat = size / tile */
-function floorMat(name,tex,tile,r,o={}){ const room=ROOM[name], w=room.x1-room.x0, d=room.z1-room.z0;
-  return MATS['fl_'+name]=new THREE.MeshStandardMaterial({map:rep(tex,w/tile,d/tile),roughness:r,metalness:0,envMapIntensity:o.e??.6,
-    bumpMap:o.bump?rep(o.bump,w/(o.bt||tile),d/(o.bt||tile)):null,bumpScale:o.bs??.4}); }
+/* room floors */
+function floorMat(name,tex,tile,r,o={}){ /* floor tiles carry world-space UVs (metres) */
+  return MATS['fl_'+name]=new THREE.MeshStandardMaterial({map:rep(tex,1/tile,1/tile),roughness:r,metalness:0,envMapIntensity:o.e??.6,
+    bumpMap:o.bump?rep(o.bump,1/(o.bt||tile),1/(o.bt||tile)):null,bumpScale:o.bs??.4}); }
 floorMat('lounge',OAK,2,.5); floorMat('research',tileTex,1.2,.32,{e:.9});
 floorMat('mr1',carpetTileTex,1,.95,{bump:grainTex,bt:.5,bs:.6}); floorMat('mr2',carpetTileTex,1,.95,{bump:grainTex,bt:.5,bs:.6});
 floorMat('media',carpetTex(70,68,72,.12),1,.97,{bump:grainTex,bt:.5,bs:.6}); floorMat('store',concreteTex,2,.6);
@@ -647,22 +656,25 @@ function rail(parent,x0,z0,x1,z1,y0=H1,h=1.05){
   parent.add(g); return g;
 }
 const gRails1=new THREE.Group(); G1.add(gRails1);
-const RAIL_LIST=[[X903,ZB+.07,mx(1307),ZB+.07],[mx(1580),ZB+.07,XE-.1,ZB+.07],            // mezzanine north edge (overlooks exhibition floor)
- [mx(1307),mz(732),mx(1580)+0,mz(732)],[mx(1580)-.05,ZB+.07,mx(1580)-.05,mz(732)],    // stair-2 side + landing edge
+const RAIL_LIST=[[X903,ZB+.07,XE-.1,ZB+.07],                                   // mezzanine north edge
+ [S2.x0-.02,S2.z0,S2.x0-.02,S2.z1],[S2.x0,S2.z0+.02,XE-.23,S2.z0+.02],          // Stair-2 opening (open at its south end = top landing)
  [X903-.02,mz(738),X903-.02,ZS-.05],                                       // divider mezzanine | lounge deck
  [XW+.05,ZB+.07,XW+.05,ZS-.05],[XW+.05,ZS-.07,X903,ZS-.07],[XW+.05,ZB+.07,mx(636),ZB+.07], // deck parapets
- [mx(636),ZB+.1,mx(636),mz(738)],[mx(636),mz(738),X903,mz(738)]            // stair-1 opening
+ [mx(636),ZB+.1,mx(636),mz(738)],[mx(636),mz(738),X903,mz(738)],           // stair-1 opening
+ [19.07,3.09,XE-.05,3.09],[19.07,3.09,19.07,ZB-.02],[XE-.07,3.09,XE-.07,ZB-.02] // research-wing roof parapet
 ];
 RAIL_LIST.forEach(r=>rail(gRails1,...r));
 
 /* floors (finishes) */
-function floorTile(r,mat){ return box(r.x1-r.x0,.03,r.z1-r.z0,mat,(r.x0+r.x1)/2,0,(r.z0+r.z1)/2,gFloors); }
-const FT={}; for(const k of ['lounge','mr1','mr2','research','media','store']) FT[k]=floorTile(ROOM[k],MATS['fl_'+k]);
+function floorTile(r,mat,par=gFloors){ const m=box(r.x1-r.x0,.03,r.z1-r.z0,mat,(r.x0+r.x1)/2,0,(r.z0+r.z1)/2,par);
+  const p=m.geometry.attributes.position, uv=m.geometry.attributes.uv; for(let i=0;i<p.count;i++) uv.setXY(i,p.getX(i)+m.position.x,p.getZ(i)+m.position.z); uv.needsUpdate=true; return m; }
+const FT={}; for(const k of ['lounge','mr1','mr2','media','store']) FT[k]=floorTile(ROOM[k],MATS['fl_'+k]);
+FT.research=new THREE.Group(); gFloors.add(FT.research); RES_TILES.forEach(r=>floorTile(r,MATS.fl_research,FT.research));
 
 /* slabs at +2.5 m */
 const gSlabs=new THREE.Group(); G1.add(gSlabs);
-const slabMezz=polyMesh(SLAB_MEZZ,SLAB,H1,MATS.slabTop), slabLounge=polyMesh(SLAB_LOUNGE,SLAB,H1,MATS.deck), slabMeet=polyMesh(SLAB_MEET,SLAB,H1,MATS.deck);
-gSlabs.add(slabMezz,slabLounge,slabMeet);
+const slabMezz=polyMesh(SLAB_MEZZ,SLAB,H1,MATS.slabTop), slabLounge=polyMesh(SLAB_LOUNGE,SLAB,H1,MATS.deck), slabMeet=polyMesh(SLAB_MEET,SLAB,H1,MATS.deck), slabWing=polyMesh(SLAB_WING,SLAB,H1,MATS.deck);
+gSlabs.add(slabMezz,slabLounge,slabMeet,slabWing);
 const roof=polyMesh(SLAB_MEZZ,.08,H2+.1,MATS.roof); roof.castShadow=false; roof.visible=false; G1.add(roof);
 
 /* doors */
@@ -679,7 +691,8 @@ function buildDoor(d){
     const hx=d.cx+d.hinge*d.w/2; leaf(g,hx,d.cz,d.w,Math.atan2(-d.into*Math.sin(ang),-d.hinge*Math.cos(ang)));
   }else{
     box(T,.25,d.w,MATS.wall,d.cx,2.1,d.cz,g);
-    for(const h of [-1,1]){ const pz=d.cz+h*d.w/2; leaf(g,d.cx,pz,d.w/2,Math.atan2(h*Math.cos(ang),d.into*Math.sin(ang))); }
+    if(d.double){ for(const h of [-1,1]){ const pz=d.cz+h*d.w/2; leaf(g,d.cx,pz,d.w/2,Math.atan2(h*Math.cos(ang),d.into*Math.sin(ang))); } }
+    else { const h=d.hinge, pz=d.cz+h*d.w/2; leaf(g,d.cx,pz,d.w,Math.atan2(h*Math.cos(ang),d.into*Math.sin(ang))); }
   }
   gDoors.add(g); return g;
 }
@@ -687,17 +700,15 @@ const doorObjs={}; DOORS.forEach(d=>doorObjs[d.id]=buildDoor(d));
 
 /* stairs */
 function buildStair(s){
-  const g=new THREE.Group(), w=s.z1-s.z0, run=(s.x1-s.x0)/NSTEP, rise=H1/NSTEP, zc=(s.z0+s.z1)/2;
-  for(let i=0;i<NSTEP;i++){
-    const xa=s.dir>0?s.x0+i*run:s.x1-(i+1)*run;
-    box(run,rise*(i+1),w,MATS.step,xa+run/2,0,zc,g);
-    box(run*.12,.012,w,MATS.stepEdge,s.dir>0?xa+run*.94:xa+run*.06,rise*(i+1),zc,g);
-  }
-  const a=Math.atan2(H1,s.x1-s.x0), L=Math.hypot(H1,s.x1-s.x0), th=s.dir>0?a-Math.PI/2:Math.PI/2-a;
-  [s.z0+.05,s.z1-.05].forEach(z=>{
-    cyl(.027,L,MATS.metal,(s.x0+s.x1)/2,H1/2+.95,z,g,10,0,th);
-    for(let i=0;i<=NSTEP;i+=2){ const x=s.dir>0?s.x0+i*run:s.x1-i*run, y=Math.max(rise*i,0); cyl(.02,.95,MATS.metal,x,y+.475,z,g,8); }
-  });
+  const along=s.axis==='z', La=along?s.z1-s.z0:s.x1-s.x0, w=along?s.x1-s.x0:s.z1-s.z0, run=La/NSTEP, rise=H1/NSTEP;
+  const g=new THREE.Group(), k=new THREE.Group(); g.add(k);           // k: local frame, climbs towards +x from 0 to La
+  for(let i=0;i<NSTEP;i++){ box(run,rise*(i+1),w,MATS.step,i*run+run/2,0,0,k); box(run*.12,.012,w,MATS.stepEdge,i*run+run*.06,rise*(i+1),0,k); }
+  const a=Math.atan2(H1,La), L=Math.hypot(H1,La);
+  [-w/2+.05,w/2-.05].forEach(z=>{ cyl(.027,L,MATS.metal,La/2,H1/2+.95,z,k,10,0,a-Math.PI/2);
+    for(let i=0;i<=NSTEP;i+=2) cyl(.02,.95,MATS.metal,i*run,rise*i+.475,z,k,8); });
+  const xc=(s.x0+s.x1)/2, zc=(s.z0+s.z1)/2;
+  if(!along){ k.position.set(s.dir>0?s.x0:s.x1,0,zc); k.rotation.y=s.dir>0?0:Math.PI; }
+  else { k.position.set(xc,0,s.dir>0?s.z0:s.z1); k.rotation.y=s.dir>0?-Math.PI/2:Math.PI/2; }
   G0.add(g); return g;
 }
 const stairObjs=STAIRS.map(buildStair);
@@ -708,20 +719,22 @@ Object.values(FT).forEach(t=>edgeify(t,EDGE_SOFT));
 const fmtA=(m2)=>`${m2.toFixed(1)} m² · ${(m2*SQFT).toFixed(0)} sq ft`;
 function roomEl(id,name,k,desc,tags,extra={}){
   const r=ROOM[k], w=r.x1-r.x0, d=r.z1-r.z0;
-  return reg({id,name,cat:'room',level:0,obj:FT[k],ay:1.3,key:true,tags,
+  return reg({id,name,cat:'room',level:0,obj:extra.obj||FT[k],ay:1.3,key:true,tags,
     dims:`${w.toFixed(2)} × ${d.toFixed(2)} m`,height:'2.5 m (floor to slab)',area:fmtA(w*d),desc,...extra});
 }
 roomEl('G1','Lounge Area','lounge','Arrival and waiting lounge. Entered from the exhibition floor through the lounge door; two bench sofas on the west wall. Hub that connects the Research Room, both Meeting Rooms and Stair 1 (north-east corner).',['OEM','OEM·A','OEM·B']);
-roomEl('G2','Research Room','research','Largest room in the stall. Entered from the lounge through a 2.0 m double door; also gives access to the Media Room and Store Room along its north wall.',['OEM'],
-  {dims:'13.66 × 6.77 m (per plan)',area:'92.4 m² · 990 sq ft (per plan)',focus:{dist:15}});
-roomEl('G3','Media Room','media','Presentation / media room: wall bench, meeting table and four chairs. Reached from the Research Room.',['OEM']);
-roomEl('G4','Store Room','store','Back-of-house storage. Reached from the Research Room.',[]);
+roomEl('G2','Research Room','research','Largest room in the stall, now L-shaped: the main hall behind the lounge plus a walled wing in the north-east corner (where the SUV used to be). Entered only from the lounge through the 2.0 m double door; the wing has no door to the exhibition floor. The plan still labels it 990 sq ft, which matches the old rectangle.',['OEM'],
+  {dims:'L-shaped · 11.8 × 6.8 m main hall + 7.5 × 8.8 m wing',area:fmtA(RES_AREA)+' (measured from the updated plan)',focus:{dist:22},obj:FT.research,ax:20.5,az:13.2});
+roomEl('G3','Media Room','media','Media room with a three-seat sofa on the north wall and a six-seat meeting table. Now entered from the lounge through a door next to the top of Stair 1.',['OEM']);
+roomEl('G4','Store Room','store','Narrow back-of-house strip along the east wall. Holds Stair 2 (down from the mezzanine) and has a service door in the east wall, which is the OEM exit after the mezzanine.',['OEM·B']);
 roomEl('G5','Meeting Room 1','mr1','Four-seat meeting room with a central table. Door opens onto the lounge.',['OEM·A']);
 roomEl('G6','Meeting Room 2','mr2','Six-seat meeting room with a long table. Door opens onto the lounge.',['OEM·A']);
 
 reg({id:'M1',name:'Mezzanine Floor',cat:'mezz',level:1,obj:slabMezz,ax:20.6,az:15.2,ay:H1+1.7,key:true,tags:['OEM','OEM·B'],
-  dims:'14.1 × 10.0 m (approx.)',height:'2.5 m clear (+2.5 → +5.0 m)',area:'≈ 130 m² (excl. stair void)',
-  desc:'Seating / hospitality level above the Research, Media and Store rooms. Eight four-seat tables and a pantry; the north edge overlooks the exhibition floor. Reached by Stair 1, left by Stair 2.'});
+  dims:'14.1 × 10.0 m (approx.)',height:'2.5 m clear (+2.5 → +5.0 m)',area:'≈ 133 m² (excl. Stair 2 opening)',
+  desc:'Seating / hospitality level above the Research, Media and Store rooms. Eight four-seat tables and a pantry. Reached by Stair 1; left by Stair 2, whose opening now sits on the east side (the café tables are shifted west to clear it). No updated mezzanine plan was supplied, so the opening position is inferred from the new ground floor.'});
+reg({id:'M5',name:'Research Wing Roof Slab',cat:'mezz',level:1,obj:slabWing,ay:H1+.6,key:false,tags:[],
+  dims:'8.0 × 6.0 m',height:'Slab at +2.5 m',area:'not shown on the plans',desc:'Closed roof over the new north-east research wing, modelled like the other single-storey roofs. The plans do not show it, so treat it as an assumption.'});
 reg({id:'M3',name:'Lounge Roof Slab',cat:'mezz',level:1,obj:slabLounge,ay:H1+.6,key:false,tags:[],
   dims:`${(X903-XW).toFixed(1)} × ${(Z_SPLIT-ZB).toFixed(1)} m (with Stair-1 void)`,height:'Slab at +2.5 m',area:'hatched on the mezzanine plan',
   desc:'Hatched region of the mezzanine plan above the Lounge. Modelled as a closed slab with a parapet – not an accessible floor.'});
@@ -730,11 +743,11 @@ reg({id:'M4',name:'Meeting Rooms Roof Slab',cat:'mezz',level:1,obj:slabMeet,ay:H
   desc:'Vertically-hatched region of the mezzanine plan above the two Meeting Rooms. Modelled as a closed slab with a parapet.'});
 
 STAIRS.forEach((s,i)=>reg({id:s.id,name:s.name,cat:'circ',level:0,obj:stairObjs[i],key:true,ay:H1+.9,tags:i===0?['OEM·B']:['OEM·B'],
-  dims:`${(s.x1-s.x0).toFixed(2)} m run × ${(s.z1-s.z0).toFixed(2)} m wide`,height:'Rise 2.5 m · 17 risers of 147 mm',area:'',
+  dims:s.axis==='z'?`${(s.z1-s.z0).toFixed(2)} m run × ${(s.x1-s.x0).toFixed(2)} m wide`:`${(s.x1-s.x0).toFixed(2)} m run × ${(s.z1-s.z0).toFixed(2)} m wide`,height:'Rise 2.5 m · 17 risers of 147 mm',area:'',
   desc:i===0?'Climbs east from the Lounge to the Mezzanine floor at +2.5 m. Open to the lounge on its south side.'
-           :'Descends east from the Mezzanine to ground level. The plan shows no exit door here, so an opening in the north wall is assumed at the foot of the stair.'}));
+           :'Runs north–south inside the store-room strip on the east wall. From the mezzanine it descends northwards into the store room, whose service door in the east wall is the OEM exit.'}));
 DOORS.forEach(d=>reg({id:d.id,name:d.name,cat:'circ',level:0,obj:doorObjs[d.id],key:false,ay:2.6,
-  tags:d.id==='D1'||d.id==='D6'?['OEM']:d.id==='D4'||d.id==='D5'?['OEM·A']:['OEM'],
+  tags:d.id==='D1'||d.id==='D6'?['OEM']:d.id==='D4'||d.id==='D5'?['OEM·A']:d.id==='D3'?['OEM·B']:['OEM'],
   dims:`${d.w.toFixed(2)} m clear width`,height:'2.1 m',area:'',desc:'Door shown open about 70° as on the plan swing arc.'}));
 /* ============================ Vehicles (procedural, detailed; front = +x, right = +z) ============================ */
 const paint=(c,m=.6,r=.32)=>new THREE.MeshPhysicalMaterial({color:c,metalness:m,roughness:r,clearcoat:1,clearcoatRoughness:.05,envMapIntensity:1.3});
@@ -892,6 +905,123 @@ function buildTruck(){
     box(.95,.05,.38,VM.trim,2.62,1.06,sd*1.0,g); box(.05,.25,.38,VM.trim,2.12,.84,sd*1.0,g);
     box(.02,.4,.34,VM.trim,-3.25,.35,sd*1.0,g); }
   return g; }
+/* ============================ Concept display vehicles (open-frame show models, per reference photos) ============================ */
+const CM={
+  white:new THREE.MeshPhysicalMaterial({color:0xf4f5f6,roughness:.22,metalness:0,clearcoat:1,clearcoatRoughness:.08,envMapIntensity:1.05}),
+  matte:new THREE.MeshStandardMaterial({color:0xe6e8ea,roughness:.55,envMapIntensity:.8}),
+  grey:new THREE.MeshStandardMaterial({color:0xaeb4bb,roughness:.35,metalness:.35}),
+  dark:new THREE.MeshStandardMaterial({color:0x2a2e35,roughness:.45,metalness:.3}),
+  blue:new THREE.MeshStandardMaterial({color:0x0d2f6e,emissive:0x2f86ff,emissiveIntensity:2.0,roughness:.3}),
+  cyan:new THREE.MeshStandardMaterial({color:0x0a3a44,emissive:0x29d8ff,emissiveIntensity:1.3,roughness:.3}),
+  led:new THREE.MeshStandardMaterial({color:0xffffff,emissive:0xeaf4ff,emissiveIntensity:2.6,roughness:.2}),
+  glass:new THREE.MeshPhysicalMaterial({color:0x8fc6ff,roughness:.05,transparent:true,opacity:.22,depthWrite:false,side:THREE.DoubleSide,envMapIntensity:1.2}),
+  orange:new THREE.MeshStandardMaterial({color:0xff7a1a,roughness:.45}),
+  purple:new THREE.MeshStandardMaterial({color:0x3a0d55,emissive:0xb04cff,emissiveIntensity:1.4,roughness:.3}),
+};
+/* a flat sculpted band swept along a smooth path (points in x,y,z) */
+function band(pts,w,t,mat,closed=false){
+  const curve=new THREE.CatmullRomCurve3(pts.map(p=>new THREE.Vector3(...p)),closed,'centripetal');
+  const r=Math.min(w,t)*.45, s=new THREE.Shape(), x=-w/2, y=-t/2;
+  s.moveTo(x+r,y); s.lineTo(x+w-r,y); s.quadraticCurveTo(x+w,y,x+w,y+r); s.lineTo(x+w,y+t-r); s.quadraticCurveTo(x+w,y+t,x+w-r,y+t); s.lineTo(x+r,y+t); s.quadraticCurveTo(x,y+t,x,y+t-r); s.lineTo(x,y+r); s.quadraticCurveTo(x,y,x+r,y);
+  const g=new THREE.ExtrudeGeometry(s,{steps:Math.ceil(curve.getLength()*28),bevelEnabled:false,extrudePath:curve,curveSegments:4});
+  const m=new THREE.Mesh(g,mat); m.castShadow=m.receiveShadow=true; return m; }
+function cable(par,pts,r=.02,mat=CM.orange){ const c=new THREE.CatmullRomCurve3(pts.map(p=>new THREE.Vector3(...p))); const m=new THREE.Mesh(new THREE.TubeGeometry(c,40,r,8),mat); m.castShadow=true; par.add(m); return m; }
+/* hubless ring wheel: glossy white tyre ring, glowing inner ring, tinted disc (axis = z) */
+function ringWheel(par,x,y,z,R,tube,o={}){
+  const g=new THREE.Group(); g.position.set(x,y,z); par.add(g);
+  const t=new THREE.Mesh(new THREE.TorusGeometry(R-tube,tube,28,72),CM.white); t.scale.z=o.wide??1.25; t.castShadow=true; g.add(t);
+  const tread=new THREE.Mesh(new THREE.TorusGeometry(R-tube,tube*1.01,8,72,Math.PI*2),CM.grey); tread.scale.set(1,1,.35); g.add(tread);
+  const inner=new THREE.Mesh(new THREE.TorusGeometry(R-tube*2.05,tube*.22,10,64),o.glow||CM.blue); g.add(inner);
+  if(o.disc!==false){ const d=new THREE.Mesh(new THREE.CircleGeometry(R-tube*2.1,48),o.discMat||CM.glass); d.userData.noAO=true; g.add(d); }
+  if(o.face){ const f=new THREE.Mesh(new THREE.TorusGeometry(R*.42,R*.08,12,48),CM.matte); g.add(f); const h=new THREE.Mesh(new THREE.CylinderGeometry(R*.18,R*.18,tube*2.4,32),CM.grey); h.rotation.x=Math.PI/2; g.add(h);
+    for(let i=0;i<6;i++){ const sp=box(R*.62,.05,.05,CM.matte,0,0,0,g); sp.geometry.translate(R*.62/2+R*.18,-.025,0); sp.rotation.z=i*Math.PI/3; } }
+  return g; }
+/* partial ring used as a sculpted fender (axis z) */
+function arcFender(par,x,y,z,R,tube,a0,len,mat=CM.white,sc=1.6){ const m=new THREE.Mesh(new THREE.TorusGeometry(R,tube,16,48,len),mat); m.position.set(x,y,z); m.rotation.z=a0; m.scale.z=sc; m.castShadow=true; par.add(m); return m; }
+function seatShell(par,x,y,z,rot=0,mat=CM.white){ const g=new THREE.Group(); g.position.set(x,y,z); g.rotation.y=rot; par.add(g);
+  const base=rbox(.5,.09,.5,.04,mat); base.position.set(0,.05,0); g.add(base);
+  const back=rbox(.09,.62,.5,.04,mat); back.position.set(-.24,.36,0); back.rotation.z=.18; g.add(back);
+  const cush=rbox(.42,.04,.42,.02,CM.grey); cush.position.set(.02,.11,0); g.add(cush); cyl(.05,.18,CM.grey,0,-.06,0,g,12); return g; }
+function screenGlow(par,w,h,x,y,z,ry,rz=0,mat=CM.blue){ const m=box(.015,h,w,mat,0,0,0,par); m.position.set(x,y,z); m.rotation.set(0,ry,rz); return m; }
+
+function buildConceptCar(){
+  const g=new THREE.Group(), W=1.62, hz=.86, R=.43, tb=.1, xf=1.56, xr=-1.56;
+  /* skateboard platform with glowing battery modules under a tinted cover */
+  const deck=rbox(3.5,.16,1.36,.06,CM.matte); deck.position.set(0,.36,0); g.add(deck);
+  for(let i=0;i<6;i++)for(let j=0;j<3;j++){ const b=box(.44,.05,.34,j===1?CM.cyan:CM.grey,-1.2+i*.48,.44,-.4+j*.4,g); }
+  const cover=box(2.95,.08,1.24,CM.glass,0,.44,0,g); cover.userData.noAO=true;
+  for(const z of [-.62,.62]) box(3.1,.02,.02,CM.cyan,0,.5,z,g);
+  /* e-axles + inverters + HV cables */
+  for(const x of [xf,xr]){ cyl(.15,1.1,CM.grey,x,R,0,g,24,Math.PI/2,0); cyl(.19,.32,CM.dark,x,R,.18,g,24,Math.PI/2,0); const inv=rbox(.36,.16,.42,.03,CM.dark); inv.position.set(x-Math.sign(x)*.42,.56,-.15); g.add(inv);
+    box(.02,.02,.2,CM.cyan,x-Math.sign(x)*.42,.65,-.15,g); }
+  cable(g,[[-1.2,.5,-.3],[-1.0,.62,-.2],[-1.14,.6,-.15]]); cable(g,[[1.2,.5,.3],[1.0,.62,.1],[1.14,.6,-.15]]); cable(g,[[-.9,.52,.5],[0,.58,.55],[.9,.52,.5]],.016,CM.orange);
+  /* ring wheels with sculpted fenders */
+  for(const sd of [-1,1]){ for(const x of [xf,xr]){ ringWheel(g,x,R,sd*hz,R,tb);
+      arcFender(g,x,R,sd*(hz-.02),R+.07,.05,x>0?-.15:Math.PI*.35,Math.PI*.8); } }
+  /* swept side frames: front bumper → over the cabin → rear */
+  for(const sd of [-1,1]){ const z=sd*(W/2-.02);
+    g.add(band([[2.32,.5,z],[2.28,.86,z],[1.75,1.02,z],[1.05,1.12,z],[.55,1.46,z],[-.25,1.66,z],[-1.05,1.6,z],[-1.65,1.26,z],[-2.12,.92,z],[-2.3,.55,z]],.15,.09,CM.white));
+    g.add(band([[2.25,.52,z],[1.2,.6,z*1.02],[0,.58,z*1.04],[-1.2,.6,z*1.02],[-2.25,.55,z]],.11,.12,CM.white));
+    g.add(band([[.62,1.42,z],[.75,1.12,z*1.01],[.9,.62,z*1.02]],.09,.07,CM.white)); }
+  for(const [x,y] of [[.55,1.46],[-1.05,1.6],[2.3,.66],[-2.28,.62]]){ const c=new THREE.Mesh(new THREE.CylinderGeometry(.05,.05,W-.04,16),CM.white); c.rotation.x=Math.PI/2; c.position.set(x,y,0); c.castShadow=true; g.add(c); }
+  const roof=box(1.5,.02,W-.16,CM.glass,-.25,1.63,0,g); roof.rotation.z=-.05; roof.userData.noAO=true;
+  for(const z of [-.5,0,.5]) box(1.3,.012,.03,CM.blue,-.25,1.645,z,g);
+  /* nose and tail modules with light bars */
+  const nose=new THREE.Shape(); nose.moveTo(2.42,.38); nose.quadraticCurveTo(2.5,.62,2.38,.78); nose.quadraticCurveTo(2.0,.88,1.95,.82); nose.lineTo(1.95,.38); nose.lineTo(2.42,.38);
+  g.add(shapeMesh(nose,1.3,.14,CM.white,12)); box(.02,.03,1.1,CM.led,2.47,.66,0,g); box(.02,.012,.9,CM.blue,2.46,.5,0,g);
+  const tail=new THREE.Shape(); tail.moveTo(-2.42,.38); tail.quadraticCurveTo(-2.48,.62,-2.35,.76); tail.lineTo(-1.95,.8); tail.lineTo(-1.95,.38); tail.lineTo(-2.42,.38);
+  g.add(shapeMesh(tail,1.3,.14,CM.white,12)); box(.02,.03,1.1,CM.blue,-2.45,.66,0,g);
+  /* cockpit: dashboard with screens, steering wheel, sculpted seats */
+  const dash=rbox(.28,.12,1.28,.05,CM.white); dash.position.set(1.0,.9,0); g.add(dash);
+  screenGlow(g,.55,.2,.9,1.02,-.32,0,.35); screenGlow(g,.35,.16,.9,1.0,.3,0,.35,CM.cyan);
+  const sw=new THREE.Mesh(new THREE.TorusGeometry(.16,.022,10,32),CM.dark); sw.position.set(.72,1.0,-.34); sw.rotation.set(0,Math.PI/2,0); sw.rotateX(.5); g.add(sw); cyl(.025,.25,CM.dark,.84,.95,-.34,g,8,0,1.0);
+  seatShell(g,.05,.52,-.36); seatShell(g,.05,.52,.36); seatShell(g,-1.0,.52,-.36,0,CM.matte); seatShell(g,-1.0,.52,.36,0,CM.matte);
+  box(.5,.06,.24,CM.grey,.55,.55,0,g);   /* centre console */
+  return g; }
+
+function buildConceptTruck(){
+  const g=new THREE.Group(), R=.56, tb=.13, xf=2.42, xr=-2.25, hz=1.0;
+  /* low chassis: rails + skateboard deck behind the cab */
+  for(const z of [-.46,.46]){ const r=rbox(6.2,.2,.16,.05,CM.matte); r.position.set(-.15,.55,z); g.add(r); }
+  const deck=rbox(4.1,.14,1.9,.06,CM.white); deck.position.set(-1.25,.72,0); g.add(deck);
+  /* battery packs, power module on pedestal, e-axles, inverter, cables */
+  for(const [x,z] of [[-.6,-.48],[-.6,.48],[-1.85,-.48],[-1.85,.48]]){ const b=rbox(1.15,.3,.86,.05,CM.grey); b.position.set(x,.94,z); g.add(b); box(1.0,.012,.012,CM.cyan,x,1.1,z+.43,g); box(1.0,.012,.012,CM.cyan,x,1.1,z-.43,g); }
+  const ped=rbox(.9,.5,.9,.06,CM.white); ped.position.set(.75,1.04,0); g.add(ped);
+  const pm=rbox(.8,.5,.8,.05,CM.dark); pm.position.set(.75,1.54,0); g.add(pm); for(let i=0;i<4;i++) box(.82,.03,.06,CM.blue,.75,1.38+i*.1,.41,g); for(let i=0;i<3;i++) cyl(.07,.25,CM.grey,.55+i*.2,1.86,0,g,16);
+  for(const x of [xf,xr]){ cyl(.2,1.3,CM.grey,x,R,0,g,28,Math.PI/2,0); cyl(.27,.4,CM.dark,x,R,.22,g,28,Math.PI/2,0); }
+  const inv=rbox(.5,.22,.6,.04,CM.dark); inv.position.set(-2.95,.82,0); g.add(inv); box(.02,.03,.4,CM.cyan,-2.7,.86,0,g);
+  cable(g,[[-1.3,.95,.0],[-1.6,.98,.1],[-2.25,.7,.2]],.03); cable(g,[[.3,1.1,-.2],[1.4,.85,-.3],[2.4,.6,-.22]],.03); cable(g,[[-2.9,.9,.1],[-2.5,.75,.2]],.025);
+  /* ring wheels with fender pods */
+  for(const sd of [-1,1]){ for(const x of [xf,xr]){ ringWheel(g,x,R,sd*hz,R,tb,{wide:1.35,disc:false,face:true,glow:CM.purple});
+      arcFender(g,x,R,sd*(hz-.05),R+.09,.07,-.05,Math.PI*1.1,CM.white,1.9); } }
+  /* front fascia with headlight bar */
+  const fr=new THREE.Shape(); fr.moveTo(3.5,.4); fr.quadraticCurveTo(3.62,.75,3.55,1.15); fr.quadraticCurveTo(3.4,1.32,3.05,1.32); fr.lineTo(2.95,.4); fr.lineTo(3.5,.4);
+  g.add(shapeMesh(fr,2.2,.2,CM.white,12)); box(.02,.035,1.9,CM.led,3.585,1.02,0,g); box(.02,.2,1.3,CM.dark,3.55,.62,0,g); box(.02,.02,1.2,CM.purple,3.58,.75,0,g);
+  /* C-shaped cab arch: front pillar → roof → rear pillar, two sides + roof canopy + rear slats */
+  for(const sd of [-1,1]){ const z=sd*1.04;
+    g.add(band([[3.38,1.15,z],[3.42,2.0,z],[3.36,2.65,z],[3.1,2.98,z],[2.6,3.08,z],[1.9,3.06,z],[1.5,2.85,z],[1.4,2.2,z],[1.42,1.4,z],[1.55,.9,z]],.26,.36,CM.white)); }
+  const can=new THREE.Shape(); can.moveTo(1.48,2.92); can.lineTo(2.6,3.0); can.quadraticCurveTo(3.2,2.98,3.36,2.66); can.lineTo(3.28,2.62); can.quadraticCurveTo(3.12,2.9,2.6,2.92); can.lineTo(1.5,2.84); can.lineTo(1.48,2.92);
+  g.add(shapeMesh(can,2.3,.04,CM.white,16));
+  for(let i=0;i<4;i++){ const sl=rbox(.1,.07,2.0,.03,CM.white); sl.position.set(1.43,1.55+i*.32,0); g.add(sl); }
+  const ws=box(.02,1.2,1.85,CM.glass,3.3,1.5,0,g); ws.rotation.z=.06; ws.userData.noAO=true;
+  /* cab interior: floor, seat, wheel, dash screens */
+  const cf=rbox(1.9,.1,2.0,.04,CM.matte); cf.position.set(2.45,1.28,0); g.add(cf);
+  seatShell(g,2.15,1.33,-.5); seatShell(g,2.15,1.33,.5,0,CM.matte);
+  const dash=rbox(.3,.14,1.9,.05,CM.white); dash.position.set(3.05,1.85,0); g.add(dash); screenGlow(g,.7,.24,3.0,2.0,-.45,0,.4); screenGlow(g,.5,.2,3.0,2.0,.4,0,.4,CM.purple);
+  const sw=new THREE.Mesh(new THREE.TorusGeometry(.2,.025,10,32),CM.dark); sw.position.set(2.75,1.95,-.5); sw.rotation.set(0,Math.PI/2,0); sw.rotateX(.7); g.add(sw);
+  /* rear module with light bar */
+  const rr=new THREE.Shape(); rr.moveTo(-3.45,.42); rr.quadraticCurveTo(-3.52,.7,-3.4,.95); rr.lineTo(-2.95,1.0); rr.lineTo(-2.95,.42); rr.lineTo(-3.45,.42);
+  g.add(shapeMesh(rr,2.0,.16,CM.white,10)); box(.02,.03,1.8,CM.purple,-3.48,.82,0,g);
+  return g; }
+/* sculpted white plinth for the concept car (thick, chamfered, light line at the foot) */
+function conceptPlinth(L,W,H){ const g=new THREE.Group(), s=new THREE.Shape(), r=.5, x=-L/2,y=-W/2;
+  s.moveTo(x+r,y); s.lineTo(x+L-r,y); s.quadraticCurveTo(x+L,y,x+L,y+r); s.lineTo(x+L,y+W-r); s.quadraticCurveTo(x+L,y+W,x+L-r,y+W); s.lineTo(x+r,y+W); s.quadraticCurveTo(x,y+W,x,y+W-r); s.lineTo(x,y+r); s.quadraticCurveTo(x,y,x+r,y);
+  const top=new THREE.Mesh(new THREE.ExtrudeGeometry(s,{depth:H-.08,bevelEnabled:true,bevelThickness:.04,bevelSize:.07,bevelSegments:4,curveSegments:12}),CM.white);
+  top.rotation.x=-Math.PI/2; top.position.y=.04; top.castShadow=top.receiveShadow=true; g.add(top);
+  const led=new THREE.Mesh(new THREE.ExtrudeGeometry(s,{depth:.03,bevelEnabled:false,curveSegments:12}),CM.blue); led.scale.set((L-.1)/L,(W-.1)/W,1); led.rotation.x=-Math.PI/2; g.add(led);
+  return g; }
+const CAR_PL_H=.3;
+
 /* display plinths with a light line underneath */
 function plinth(L,W,r=.35){ const g=new THREE.Group(), s=new THREE.Shape(), x=-L/2,y=-W/2;
   s.moveTo(x+r,y); s.lineTo(x+L-r,y); s.quadraticCurveTo(x+L,y,x+L,y+r); s.lineTo(x+L,y+W-r); s.quadraticCurveTo(x+L,y+W,x+L-r,y+W); s.lineTo(x+r,y+W); s.quadraticCurveTo(x,y+W,x,y+W-r); s.lineTo(x,y+r); s.quadraticCurveTo(x,y,x+r,y);
@@ -902,25 +1032,31 @@ function plinth(L,W,r=.35){ const g=new THREE.Group(), s=new THREE.Shape(), x=-L
 const PL_H=.108;
 const placeVeh=(g,v,pl)=>{ const root=new THREE.Group(); root.position.set(v.x,0,v.z); root.rotation.y=-THREE.MathUtils.degToRad(v.head);
   if(pl){ root.add(plinth(pl[0],pl[1])); g.position.y=PL_H; } root.add(g); shadowify(root); GX.add(root); return root; };
-const vCar=placeVeh(buildSedan(),VEH.car,[5.3,2.2]), vBike=placeVeh(buildBike(),VEH.bike,[2.5,1.15]), vSuv=placeVeh(buildSUV(),VEH.suv,[4.95,2.3]), vTruck=placeVeh(buildTruck(),VEH.truck);
+const vCar=(()=>{ const root=new THREE.Group(); root.position.set(VEH.car.x,0,VEH.car.z); root.rotation.y=-THREE.MathUtils.degToRad(VEH.car.head);
+  root.add(conceptPlinth(5.4,2.4,CAR_PL_H)); const c=buildConceptCar(); c.position.y=CAR_PL_H; root.add(c); shadowify(root); GX.add(root); return root; })();
+const vBike=placeVeh(buildBike(),VEH.bike,[2.5,1.15]), vTruck=placeVeh(buildConceptTruck(),VEH.truck);
 const vehEl=(id,name,obj,dims,h,desc)=>reg({id,name,cat:'veh',level:0,obj,key:true,tags:['Public','OEM'],dims,height:h,area:'',desc,ay:Math.max(2.1,parseFloat(h)+.6)});
-vehEl('V1','Car (sedan)',vCar,'≈ 4.9 × 1.86 m on a 5.3 × 2.2 m lit plinth','1.45 m (+0.11 m plinth)','Showcase sedan on display zone Z1, set at about 42° to the grid as drawn on the plan.');
+vehEl('V1','Concept car (open-frame show model)',vCar,'≈ 4.9 × 1.75 m on a 5.4 × 2.4 m sculpted plinth','1.7 m (+0.3 m plinth)','Open-frame concept car as in the reference photo: a glossy white swept frame over an exposed skateboard chassis with glowing battery modules, e-axles, HV cabling, sculpted seats and hubless ring wheels with blue light. Sits on a thick white plinth on display zone Z1, at about 42° to the grid as on the plan.');
 vehEl('V2','Motorcycle',vBike,'≈ 2.1 × 0.8 m on a 2.5 × 1.15 m lit plinth','1.3 m','Showcase motorcycle on display zone Z2, resting on its side stand.');
-vehEl('V3','SUV',vSuv,'≈ 4.45 × 1.93 m on a 4.95 × 2.3 m lit plinth','1.81 m (+0.11 m plinth)','Showcase SUV on display zone Z3.');
-vehEl('V4','Truck',vTruck,'≈ 7.0 × 2.35 m','3.45 m','Rigid box truck parked on the west edge, cab pointing north. Longest single exhibit in the stall.');
+vehEl('V3','Concept truck (open-frame show model)',vTruck,'≈ 7.1 × 2.3 m','3.1 m','Open-frame concept truck as in the reference photo: a tall C-shaped white cab arch with roof canopy and rear slats, a low skateboard chassis showing battery packs, a power module on a pedestal, e-axles and HV cabling, and hubless ring wheels. Parked on the west edge, cab pointing north. Longest single exhibit in the stall.');
 
 /* ============================ Display zones ============================ */
-ZONES.forEach(z=>{
-  const side=z.hd*Math.SQRT2, g=new THREE.Group(); g.position.set(z.x,0,z.z); g.rotation.y=Math.PI/4;
-  const y=.016+ZONES.indexOf(z)*.004;
-  const pl=new THREE.Mesh(new THREE.PlaneGeometry(side,side),new THREE.MeshBasicMaterial({color:z.col,transparent:true,opacity:.07,depthWrite:false,polygonOffset:true,polygonOffsetFactor:-2}));
+/* clip a polygon (x,z pairs) to x <= xc */
+function clipX(poly,xc){ const out=[]; for(let i=0;i<poly.length;i++){ const a=poly[i], b=poly[(i+1)%poly.length], ia=a[0]<=xc, ib=b[0]<=xc;
+  if(ia)out.push(a); if(ia!==ib){ const t=(xc-a[0])/(b[0]-a[0]); out.push([xc,a[1]+t*(b[1]-a[1])]); } } return out; }
+ZONES.forEach((z,zi)=>{
+  const side=z.hd*Math.SQRT2, h=z.hd, y=.016+zi*.004, g=new THREE.Group();
+  let poly=[[z.x,z.z-h],[z.x+h,z.z],[z.x,z.z+h],[z.x-h,z.z]]; if(z.clipX!=null) poly=clipX(poly,z.clipX);
+  const sh=new THREE.Shape(poly.map(p=>new THREE.Vector2(p[0],-p[1])));
+  const pl=new THREE.Mesh(new THREE.ShapeGeometry(sh),new THREE.MeshBasicMaterial({color:z.col,transparent:true,opacity:.07,depthWrite:false,polygonOffset:true,polygonOffsetFactor:-2,side:THREE.DoubleSide}));
   pl.rotation.x=-Math.PI/2; pl.position.y=y; g.add(pl);
-  const h=side/2, ln=new THREE.LineLoop(new THREE.BufferGeometry().setFromPoints([[-h,-h],[h,-h],[h,h],[-h,h]].map(p=>new THREE.Vector3(p[0],y+.004,p[1]))),
+  const ln=new THREE.LineLoop(new THREE.BufferGeometry().setFromPoints(poly.map(p=>new THREE.Vector3(p[0],y+.004,p[1]))),
     new THREE.LineDashedMaterial({color:z.col,dashSize:.3,gapSize:.22,transparent:true,opacity:.7})); ln.computeLineDistances(); g.add(ln);
   GX.add(g); zoneGroups.push(g);
-  reg({id:z.id,name:`Display Zone ${z.id.slice(1)}`,cat:'zone',level:0,obj:pl,key:false,tags:['Public','OEM'],ay:.9,ax:z.x+(z.id==='Z1'?-2.4:z.id==='Z2'?1.2:2.6),az:z.z-(z.id==='Z2'?3.2:0),
-    dims:`${side.toFixed(1)} × ${side.toFixed(1)} m square, turned 45°`,height:'floor marking',area:`${(side*side).toFixed(0)} m²`,
-    desc:'Dashed rotated square on the plan marking the display footprint of a vehicle. Zones overlap slightly.'});
+  const area=Math.abs(poly.reduce((a,p,i)=>{ const q=poly[(i+1)%poly.length]; return a+p[0]*q[1]-q[0]*p[1]; },0)/2);
+  reg({id:z.id,name:`Display Zone ${z.id.slice(1)}`,cat:'zone',level:0,obj:pl,key:false,tags:['Public','OEM'],ay:.9,ax:z.x+(z.id==='Z1'?-2.4:1.2),az:z.z-(z.id==='Z2'?3.2:0),
+    dims:`${side.toFixed(1)} × ${side.toFixed(1)} m square, turned 45°`+(z.clipX!=null?' (cut by the research-wing wall)':''),height:'floor marking',area:`${area.toFixed(0)} m²`,
+    desc:'Dashed rotated square on the plan marking the display footprint of a vehicle.'+(z.clipX!=null?' On the updated plan its east corner is cut off by the new research-wing wall.':' Zones overlap slightly.')});
 });
 
 /* ============================ Reception counter ============================ */
@@ -964,12 +1100,12 @@ sofaL1.position.set(mx(547),.03,mz(827)); sofaL2.position.set(mx(547),.03,mz(915
 const loungeSofas=new THREE.Group(); loungeSofas.add(sofaL1,sofaL2); gFurn0.add(loungeSofas);
 reg({id:'F1',name:'Lounge Sofas ×2',cat:'furn',level:0,obj:loungeSofas,key:false,tags:['OEM'],dims:'2 × bench sofa 1.45 × 0.55 m',height:'0.9 m',area:'',desc:'Two three-seat bench sofas along the lounge west wall.',ay:1.4});
 
-/* Media room – wall bench, table, 4 chairs */
+/* Media room – three-seat sofa on the north wall + six-seat meeting table (updated plan) */
 const mediaG=new THREE.Group(); mediaG.position.set(0,.03,0); gFurn0.add(mediaG);
-const mBench=sofaBench(1.4,.45,MATS.fabric3); mBench.rotation.y=-Math.PI/2; mBench.position.set(mx(964),0,mz(655)); mediaG.add(mBench);
-const mTab=tableRect(1.55,1.03,.75); mTab.position.set(mx(1070),0,mz(713)); mediaG.add(mTab);
-[[1049,660,0],[1087,660,0],[1049,763,Math.PI],[1087,763,Math.PI]].forEach(([x,y,r])=>{ const c=chair(MATS.fabric3,r); c.position.set(mx(x),0,mz(y)); mediaG.add(c); });
-reg({id:'F2',name:'Media Room Furniture',cat:'furn',level:0,obj:mediaG,key:false,tags:['OEM'],dims:'bench + table 1.55 × 1.03 m + 4 chairs',height:'0.75 m table',area:'',desc:'Presentation table with four chairs and a wall bench.',ay:1.4});
+const mBench=sofaBench(1.5,.55,MATS.fabric3); mBench.rotation.y=-Math.PI/2; mBench.position.set(14.0,0,9.52); mediaG.add(mBench);
+const mTab=tableRect(1.05,2.2,.75); mTab.position.set(17.38,0,10.53); mediaG.add(mTab);
+[9.82,10.48,11.19].forEach(z=>{ const a=chair(MATS.fabric3,Math.PI/2); a.position.set(16.57,0,z); mediaG.add(a); const b=chair(MATS.fabric3,-Math.PI/2); b.position.set(18.31,0,z); mediaG.add(b); });
+reg({id:'F2',name:'Media Room Furniture',cat:'furn',level:0,obj:mediaG,key:false,tags:['OEM'],dims:'3-seat sofa + table 1.05 × 2.2 m + 6 chairs',height:'0.75 m table',area:'',desc:'Sofa on the north wall and a six-seat meeting table, as drawn on the updated plan.',ay:1.4});
 
 /* Meeting room 1 – table + 4 chairs */
 const mr1G=new THREE.Group(); mr1G.position.y=.03; gFurn0.add(mr1G);
@@ -1006,7 +1142,7 @@ reg({id:'M2',name:'Pantry Area',cat:'mezz',level:1,obj:gPantry,key:true,tags:['O
 
 [gFurn0,gFurn1].forEach(g=>edgeify(g,EDGE_SOFT,35));
 /* furniture footprints for walk-mode collisions */
-EXTRA_COL0.push({x0:6.79,z0:16.63,x1:8.35,z1:17.67},{x0:10.45,z0:15.73,x1:11.52,z1:17.99},{x0:15.15,z0:10.04,x1:16.7,z1:11.07},
+EXTRA_COL0.push({x0:6.79,z0:16.63,x1:8.35,z1:17.67},{x0:10.45,z0:15.73,x1:11.52,z1:17.99},{x0:16.85,z0:9.43,x1:17.9,z1:11.63},{x0:13.25,z0:9.23,x1:14.75,z1:9.8},
   {x0:6.2,z0:11.87,x1:6.78,z1:13.32},{x0:6.2,z0:13.47,x1:6.78,z1:14.92});
 /* ============================ People (true scale, articulated) ============================
    Built facing +x, up +y, right side = +z. Base figure is 1.77 m to the top of the hair and is
@@ -1110,23 +1246,28 @@ function staticPerson(parent,x,y,z,face,pose,look,headYaw=0){
 /* ============================ Pathways ============================ */
 const P=(x,z,y=0)=>new THREE.Vector3(x,y,z);
 const PP=a=>a.map(p=>P(p[0],p[1],p[2]||0));
-function ramp(s,top2bottom){ const z=(s.z0+s.z1)/2, a=[]; for(let i=0;i<=6;i++){ const t=i/6, x=s.dir>0?lerp(s.x0,s.x1,t):lerp(s.x1,s.x0,t); a.push(P(x,z,H1*t)); } return top2bottom?a.reverse():a; }
+function ramp(s,top2bottom){ const a=[], xc=(s.x0+s.x1)/2, zc=(s.z0+s.z1)/2;
+  for(let i=0;i<=6;i++){ const t=i/6, u=s.dir>0?t:1-t; a.push(s.axis==='z'?P(xc,lerp(s.z0,s.z1,u),H1*t):P(lerp(s.x0,s.x1,u),zc,H1*t)); }
+  return top2bottom?a.reverse():a; }
 
 const SEG={
-  pub:{css:'#0e9f8e',hex:0x0e9f8e,pts:PP([[-.4,3.0],[3.2,4.4],[6.5,2.6],[10.6,1.0],[14.7,1.4],[17.2,1.7],[23.7,1.3],[26.5,3.2],[26.5,6.8],[23.7,7.9],[17.2,7.4],[14.7,6.6],[14.7,3.2],[14.7,-.8]])},
-  oemMain:{css:'#e8772e',hex:0xe8772e,pts:PP([[-.4,3.0],[3.2,4.4],[5.0,1.7],[10.6,.9],[14.7,1.0],[17.2,1.4],[23.7,1.0],[26.5,3.0],[26.5,6.8],[23.7,7.9],[17.2,7.4],[14.7,6.4],[14.7,3.0],[13.2,1.9],[10.6,1.9],[7.6,2.7],[6.5,4.8],[6.7,7.0],[6.95,8.2],[6.95,9.1],[6.95,10.5],[8.0,12.3],[11.4,13.4],[13.0,13.4],[15.2,13.5],[18.0,15.0]])},
+  /* Public: entry → truck → car → motorcycle loop → exit north (the SUV is no longer on the plan) */
+  pub:{css:'#0e9f8e',hex:0x0e9f8e,pts:PP([[-.4,3.0],[3.2,4.4],[6.5,2.6],[10.6,1.0],[14.7,1.4],[17.2,1.5],[18.45,2.8],[18.5,5.4],[17.6,7.35],[15.5,7.45],[14.6,6.4],[14.7,3.2],[14.7,-.8]])},
+  /* OEM main: same vehicle loop, then reception → lounge → research room */
+  oemMain:{css:'#e8772e',hex:0xe8772e,pts:PP([[-.4,3.0],[3.2,4.4],[5.0,1.7],[10.6,.9],[14.7,1.0],[17.2,1.25],[18.4,2.7],[18.45,5.6],[17.5,7.7],[15.3,7.7],[14.3,6.4],[14.3,3.0],[13.2,1.9],[10.6,1.9],[7.6,2.7],[6.5,4.8],[6.7,7.0],[6.95,8.2],[6.95,9.1],[6.95,10.5],[8.0,12.3],[11.4,13.4],[13.0,13.4],[15.2,13.5],[18.0,15.0]])},
   oemA:{css:'#f0a040',hex:0xf0a040,pts:PP([[18.0,15.0],[15.4,14.2],[13.0,13.9],[10.8,14.0],[8.6,14.3],[8.4,15.0],[8.45,15.8],[8.36,15.55],[8.42,14.8],[8.75,14.3],[9.55,14.4],[9.58,15.05],[9.62,15.42],[9.92,15.6]])},
+  /* OEM B: research → Stair 1 → mezzanine → pantry → Stair 2 (east) → store room → service door → exit east */
   oemB:{css:'#c9541c',hex:0xc9541c,pts:[...PP([[18.0,15.0],[15.4,14.2],[13.0,13.9],[11.4,13.6],[9.2,12.6],[7.5,11.6],[7.55,10.1]]),...ramp(STAIRS[0],false),
-        ...PP([[14.2,10.8,H1],[15.2,12.5,H1],[17.0,12.75,H1],[20.5,12.75,H1],[22.8,12.6,H1],[22.6,11.36,H1],[21.2,11.34,H1],[20.1,11.3,H1],[19.4,10.55,H1]]),
-        ...ramp(STAIRS[1],true),...PP([[26.0,9.7],[26.4,8.3],[26.5,7.4]])]},
+        ...PP([[14.2,10.8,H1],[15.0,12.7,H1],[17.0,12.95,H1],[20.5,12.95,H1],[22.6,12.7,H1],[22.65,11.35,H1],[21.2,11.15,H1],[19.6,10.6,H1],[20.8,10.15,H1],[22.7,10.3,H1],[24.5,11.7,H1],[24.6,13.5,H1],[24.62,16.4,H1],[24.9,17.6,H1],[25.6,17.85,H1],[25.97,17.35,H1]]),
+        ...ramp(STAIRS[1],true),...PP([[25.97,11.2],[25.97,10.3],[26.4,9.8],[27.3,9.75],[28.1,9.75]])]},
 };
 const ROUTES={pub:['pub'],oemA:['oemMain','oemA'],oemB:['oemMain','oemB']};
 const STOPS=[
-  {seg:'pub',n:1,t:'Public entry',p:P(-.2,2.2)},{seg:'pub',n:2,t:'Truck',p:P(3.2,4.4)},{seg:'pub',n:3,t:'Car',p:P(10.6,1.0)},{seg:'pub',n:4,t:'Motorcycle',p:P(17.2,1.7)},
-  {seg:'pub',n:5,t:'SUV',p:P(23.7,1.3)},{seg:'pub',n:6,t:'Public exit',p:P(14.7,-.8)},
+  {seg:'pub',n:1,t:'Public entry',p:P(-.2,2.2)},{seg:'pub',n:2,t:'Truck',p:P(3.2,4.4)},{seg:'pub',n:3,t:'Car',p:P(10.6,1.0)},{seg:'pub',n:4,t:'Motorcycle',p:P(18.45,3.0)},
+  {seg:'pub',n:5,t:'Public exit',p:P(14.7,-.8)},
   {seg:'oemMain',n:1,t:'OEM entry',p:P(-.2,3.9)},{seg:'oemMain',n:2,t:'Reception',p:P(6.7,7.0)},{seg:'oemMain',n:3,t:'Lounge',p:P(6.95,10.5)},{seg:'oemMain',n:4,t:'Research Room',p:P(18.0,15.0)},
   {seg:'oemA',n:5,t:'Meeting Room 1',p:P(8.45,15.8)},{seg:'oemA',n:6,t:'Meeting Room 2',p:P(9.92,15.6)},
-  {seg:'oemB',n:5,t:'Mezzanine',p:P(17.0,12.75,H1)},{seg:'oemB',n:6,t:'Pantry',p:P(19.6,10.6,H1)},{seg:'oemB',n:7,t:'OEM exit',p:P(26.5,7.4)},
+  {seg:'oemB',n:5,t:'Mezzanine',p:P(17.0,12.95,H1)},{seg:'oemB',n:6,t:'Pantry',p:P(19.6,10.6,H1)},{seg:'oemB',n:7,t:'Store room',p:P(25.97,10.6)},{seg:'oemB',n:8,t:'OEM exit (east)',p:P(27.6,9.75)},
 ];
 STOPS.forEach(s=>{ s.css=SEG[s.seg].css; s.tag=s.seg==='pub'?'P':'O'; });
 
@@ -1217,7 +1358,6 @@ function viewers(v,L,W,n,poses){
     if(addPerson(gPeople,x,0,z,Math.atan2(tz-z,tx-x),poses[k%poses.length],'visitor',0,(crand()-.5)*.4)) k++; }
 }
 viewers(VEH.car,4.9,1.86,3,['point','folded','phone']);
-viewers(VEH.suv,4.45,1.93,2,['talk','stand']);
 viewers(VEH.bike,2.1,.8,2,['stand','point']);
 viewers({x:VEH.truck.x,z:VEH.truck.z,head:VEH.truck.head},7.0,2.4,1,['phone']);
 /* lounge: two guests on the sofas */
@@ -1228,18 +1368,23 @@ const seatAt=(x,z,face,kind)=>addPerson(gPeople0,x,.03,z,face,'seat',kind,0,0,fa
 seatAt(mx(587),mz(1131)+.03,-Math.PI/2,'exec'); seatAt(mx(626),mz(1131)+.03,-Math.PI/2,'visitor'); seatAt(mx(626),mz(1025)-.03,Math.PI/2,'exec');
 seatAt(mx(745)-.03,mz(1060),0,'exec'); seatAt(mx(849)+.03,mz(1022),Math.PI,'visitor'); seatAt(mx(849)+.03,mz(1098),Math.PI,'exec');
 /* media room: two at the table */
-seatAt(mx(1049),mz(660)+.03,Math.PI/2,'visitor'); seatAt(mx(1087),mz(763)-.03,-Math.PI/2,'exec');
+seatAt(16.6,9.82,0,'visitor'); seatAt(18.28,10.48,Math.PI,'exec'); seatAt(18.28,11.19,Math.PI,'visitor');
 /* research room: presenter at the LED wall and three listeners */
-addPerson(gPeople0,25.3,.03,15.6,Math.PI,'talk','staff',0,.3);
-addPerson(gPeople0,23.3,.03,15.0,0,'folded','exec',0,.1);
-addPerson(gPeople0,23.1,.03,16.3,0,'stand','visitor',0,-.1);
-addPerson(gPeople0,22.4,.03,15.7,0,'tablet','exec',0,0);
+addPerson(gPeople0,23.9,.03,15.4,Math.PI,'talk','staff',0,.3);
+addPerson(gPeople0,21.9,.03,14.8,0,'folded','exec',0,.1);
+addPerson(gPeople0,21.7,.03,16.1,0,'stand','visitor',0,-.1);
+addPerson(gPeople0,21.0,.03,15.5,0,'tablet','exec',0,0);
+/* research wing: engineers at the demo stations */
+addPerson(gPeople0,22.9,.03,5.45,-Math.PI/2-.4,'talk','staff',0,.3);
+addPerson(gPeople0,21.6,.03,5.55,-Math.PI/2,'stand','exec',0,0);
+addPerson(gPeople0,21.8,.03,7.05,Math.PI/2,'point','exec',0,0);
+addPerson(gPeople0,23.8,.03,5.9,0,'folded','visitor',0,.2);
 /* mezzanine: guests at the café tables */
 const SEATED=[2,0,3,1,2,1,0,2], CH=[[1,1],[-1,-1],[1,-1],[-1,1]];
 TABLES.forEach(([x,z],i)=>{ for(let k=0;k<SEATED[i];k++){ const [a,b]=CH[k]; addPerson(gPeople1,x+a*.6,H1,z+b*.6,Math.atan2(-b,-a),'seat',crand()<.5?'exec':'visitor',1,(crand()-.5)*.5,false); } });
 /* ============================ Stall dressing: rig, lights, branding, screens, plants ============================ */
 const gRig=new THREE.Group(); GX.add(gRig);
-const RIG={x0:.8,x1:25.8,z0:.7,z1:8.2,y:5.8,s:.3};
+const RIG={x0:.8,x1:18.4,z0:.7,z1:8.2,y:5.8,s:.3};
 (function(){
   const alu=VM.alu, chords=[], c=RIG.s/2;
   const segs=[[RIG.x0,RIG.z0,RIG.x1,RIG.z0],[RIG.x1,RIG.z0,RIG.x1,RIG.z1],[RIG.x1,RIG.z1,RIG.x0,RIG.z1],[RIG.x0,RIG.z1,RIG.x0,RIG.z0],[13.3,RIG.z0,13.3,RIG.z1]];
@@ -1273,11 +1418,10 @@ function fixture(x,z,tx,ty,tz,real){
 }
 function c0(){ return RIG.s/2+.03; }
 fixture(VEH.car.x-1.2,RIG.z0,VEH.car.x,.6,VEH.car.z,38); fixture(VEH.car.x+1.6,RIG.z1,VEH.car.x,.6,VEH.car.z,0);
-fixture(VEH.suv.x-1.0,RIG.z0,VEH.suv.x,.7,VEH.suv.z,38); fixture(VEH.suv.x+1.4,RIG.z1,VEH.suv.x,.7,VEH.suv.z,0);
 fixture(VEH.bike.x,RIG.z0,VEH.bike.x,.6,VEH.bike.z,26); fixture(VEH.bike.x-1.5,RIG.z1,VEH.bike.x,.6,VEH.bike.z,0);
 fixture(RIG.x0,VEH.truck.z-5.4,VEH.truck.x,1.6,VEH.truck.z-2.5,30); fixture(RIG.x0,RIG.z1-1.2,VEH.truck.x,1.6,8.5,0);
 fixture(8.4,RIG.z1,9.3,1.0,7.6,0); fixture(13.3,RIG.z0+1.6,13.5,.0,4.5,0); fixture(13.3,RIG.z1-1.6,11,.0,6,0);
-fixture(20.5,RIG.z0,20.5,0,4,0); fixture(4.5,RIG.z0,3,0,3.5,0);
+fixture(4.5,RIG.z0,3,0,3.5,0); fixture(RIG.x1,RIG.z1-1.5,17.2,.6,4.8,0);
 SPOTS.forEach(l=>l.visible=true);
 
 /* illuminated header sign hung from the front truss */
@@ -1309,11 +1453,11 @@ function screen(par,w,h,x,y,z,rotY,title,sub){ const g=new THREE.Group(); g.posi
   box(w+.06,h+.06,.06,VM.trim,0,-h/2-.03,0,g); const t=screenTex(title,sub);
   const p=new THREE.Mesh(new THREE.PlaneGeometry(w,h),new THREE.MeshStandardMaterial({map:t,emissiveMap:t,emissive:0xffffff,emissiveIntensity:.8,roughness:.3})); p.position.z=.031; p.userData.noAO=true; g.add(p); return g; }
 const gDress0=new THREE.Group(); G0.add(gDress0); furnGroups.push(gDress0);
-const ledWall=screen(gDress0,3.6,2.03,26.7,1.4,15.5,-Math.PI/2,'BMGE 2027','Research & innovation showcase');
+const ledWall=screen(gDress0,3.6,2.03,24.9,1.4,15.4,-Math.PI/2,'BMGE 2027','Research & innovation showcase');
 reg({id:'F5',name:'Research LED wall',cat:'furn',level:0,obj:ledWall,key:false,tags:['OEM'],ay:2.8,dims:'3.6 × 2.0 m LED wall',height:'bottom edge at +0.4 m',area:'',
-  desc:'Presentation LED wall on the east wall of the Research Room, with a presenter and a small audience. Indicative: not drawn on the plans.'});
+  desc:'Presentation LED wall on the research room side of the store-room wall, with a presenter and a small audience. Indicative: not drawn on the plans.'});
 screen(gDress0,1.45,.82,mx(797),1.35,mz(1167)-.03,Math.PI,'Meeting Room 2','OEM partner sessions');
-screen(gDress0,1.45,.82,mx(1123)-.03,1.3,mz(713),-Math.PI/2,'Media Room','Press & content briefings');
+screen(gDress0,1.45,.82,19.11,1.3,10.53,-Math.PI/2,'Media Room','Press & content briefings');
 (function(){ const r=RECEPTION[0], g=new THREE.Group(); g.position.set(9.4,1.105,7.35); g.rotation.y=Math.PI; GX.add(g);
   box(.18,.015,.14,VM.trim,0,0,0,g); box(.03,.2,.03,VM.trim,0,.015,0,g); const sc=box(.56,.33,.025,VM.trim,0,.15,0,g);
   const p=new THREE.Mesh(new THREE.PlaneGeometry(.53,.3),new THREE.MeshStandardMaterial({color:0x000000,emissive:0x2d6f8c,emissiveIntensity:.9})); p.position.set(0,.315,.014); g.add(p); shadowify(g); })();
@@ -1329,10 +1473,10 @@ function makePlant(h=1.4){
   const m=bakeGroup(g); return m; }
 function placePlant(par,x,y,z,lvl,h){ if(!clearSpot(x,z,lvl,.85))return; const m=makePlant(h); m.position.set(x,y,z); m.rotation.y=crand()*6; par.add(m); (lvl?EXTRA_CIR1:EXTRA_CIR0).push([x,z,.3]); }
 const gPlantsX=new THREE.Group(); GX.add(gPlantsX); furnGroups.push(gPlantsX);
-[[.5,.5],[.5,8.5],[26.5,.5],[26.5,8.5],[11.3,8.55],[5.5,.6],[20.5,8.55]].forEach(([x,z])=>placePlant(gPlantsX,x,0,z,0,1.5));
-[[13.55,12.6],[13.55,18.35],[26.35,12.6],[26.35,18.35],[16.4,9.6]].forEach(([x,z])=>placePlant(gDress0,x,.03,z,0,1.3));
+[[.5,.5],[.5,8.5],[26.5,.5],[11.3,8.55],[5.5,.6],[18.6,8.55],[19.5,.5]].forEach(([x,z])=>placePlant(gPlantsX,x,0,z,0,1.5));
+[[13.55,12.6],[13.55,18.35],[24.5,12.45],[24.5,18.35],[19.7,3.7],[26.35,3.7],[19.7,11.5]].forEach(([x,z])=>placePlant(gDress0,x,.03,z,0,1.3));
 const gDress1=new THREE.Group(); G1.add(gDress1); furnGroups.push(gDress1);
-[[13.4,18.5],[26.55,18.5],[26.55,13.4],[13.4,13.6]].forEach(([x,z])=>placePlant(gDress1,x,H1,z,1,1.3));
+[[13.4,18.5],[24.2,18.5],[26.5,9.6],[13.4,13.6]].forEach(([x,z])=>placePlant(gDress1,x,H1,z,1,1.3));
 /* lounge rug + coffee table */
 (function(){ const rug=new THREE.Mesh(new THREE.BoxGeometry(2.0,.012,2.7),new THREE.MeshStandardMaterial({map:rep(carpetTex(176,164,148,.14),2,2.7),roughness:.98}));
   rug.position.set(7.15,.036,13.4); rug.receiveShadow=true; gDress0.add(rug);
@@ -1345,6 +1489,50 @@ const gDress1=new THREE.Group(); G1.add(gDress1); furnGroups.push(gDress1);
   box(.42,.02,.3,VM.trim,0,0,0,g); box(.04,1.25,.04,VM.alu,0,0,-.05,g);
   for(let i=0;i<3;i++){ const sh=box(.38,.008,.1,VM.alu,0,.55+i*.25,.02,g); sh.rotation.x=-.3; for(let j=0;j<3;j++){ const b=box(.1,.2,.012,pmat([0x0e9f8e,0xe8772e,0x203d5c][j],.5),-.12+j*.12,.56+i*.25,.05,g); b.rotation.x=-.3; } }
   shadowify(g); if(clearSpot(.9,5.2,0,.6)){ GX.add(g); EXTRA_CIR0.push([.9,5.2,.3]); } })();
+
+/* research wing: three demo stations (indicative – the plan shows the wing empty) */
+(function(){ const g=new THREE.Group(); gDress0.add(g);
+  const station=(x,z,rot,title)=>{ const t=new THREE.Group(); t.position.set(x,.03,z); t.rotation.y=rot; g.add(t);
+    box(1.8,.9,.8,MATS.white,0,0,0,t); box(1.84,.04,.84,MATS.quartz,0,.9,0,t);
+    const scr=screen(t,1.0,.56,0,1.55,-.3,0,title,'Live demo'); 
+    box(.06,.6,.06,VM.trim,0,.94,-.3,t);
+    const prod=rbox(.42,.16,.3,.04,VM.satin); prod.position.set(-.45,1.02,.1); t.add(prod); const prod2=new THREE.Mesh(new THREE.CylinderGeometry(.12,.12,.22,24),VM.alu); prod2.position.set(.45,1.03,.1); t.add(prod2);
+    EXTRA_COL0.push({x0:x-1.0,z0:z-.5,x1:x+1.0,z1:z+.5}); };
+  station(22.0,4.5,0,'Electrification'); station(22.0,8.3,Math.PI,'ADAS sensors'); station(25.2,5.6,-Math.PI/2,'Software-defined vehicle');
+  shadowify(g);
+  reg({id:'F6',name:'Research wing demo stations',cat:'furn',level:0,obj:g,key:false,tags:['OEM'],ay:2.3,dims:'3 × demo counter 1.8 × 0.8 m with screens',height:'0.9 m counter',area:'',
+    desc:'Indicative fit-out for the new north-east research wing: the updated plan shows the wing as an empty room, so these stations are placeholders to show its scale.'}); })();
+
+/* LED pixel floor tiles around the concept vehicles (blue at the car, purple at the truck), as in the reference photos */
+const gPixels=new THREE.Group(); GX.add(gPixels);
+function pixelTiles(cx,cz,R,cols,seed){
+  let sd=seed; const rr=()=>{ sd=(sd*48271)%2147483647; return sd/2147483647; };
+  const cells=[], S=.6;
+  for(let i=Math.floor((cx-R)/S);i<=Math.ceil((cx+R)/S);i++)for(let j=Math.floor((cz-R)/S);j<=Math.ceil((cz+R)/S);j++){
+    const x=(i+.5)*S, z=(j+.5)*S, d=Math.hypot(x-cx,z-cz)/R; if(d>1||x<.3||x>26.7||z<.3||z>18.7)continue;
+    if(x>5.85&&z>8.85)continue; if(x>18.9&&z>2.9)continue;
+    if(rr()<.62*Math.pow(1-d,1.1)) cells.push([x,z,cols[Math.floor(rr()*cols.length)]]); }
+  const m=new THREE.InstancedMesh(new THREE.PlaneGeometry(S-.05,S-.05).rotateX(-Math.PI/2),new THREE.MeshBasicMaterial({transparent:true,opacity:.88,depthWrite:false,toneMapped:false,polygonOffset:true,polygonOffsetFactor:-3}),cells.length);
+  const mt=new THREE.Matrix4(), c=new THREE.Color(); cells.forEach(([x,z,col],k)=>{ m.setMatrixAt(k,mt.makeTranslation(x,.008,z)); m.setColorAt(k,c.set(col)); });
+  m.userData.noAO=true; m.renderOrder=1; gPixels.add(m); return m; }
+pixelTiles(VEH.car.x,VEH.car.z,4.6,[0x1f5fff,0x3d8bff,0x7ab8ff,0x1544b8],77);
+pixelTiles(VEH.truck.x,VEH.truck.z-1.5,4.8,[0x8a2be2,0xb04cff,0xd59cff,0x5e1aa3],91);
+/* tilted info stands beside the concept vehicles */
+function infoStand(x,z,face,title,sub,accent){
+  const g=new THREE.Group(); g.position.set(x,0,z); g.rotation.y=-face; GX.add(g);
+  cyl(.24,.02,VM.trim,0,.01,0,g,28); box(.06,.92,.1,VM.trim,0,0,0,g);
+  const c=document.createElement('canvas'); c.width=512; c.height=340; const t=c.getContext('2d');
+  t.fillStyle='#0f1520'; t.fillRect(0,0,512,340); t.fillStyle=accent; t.fillRect(0,0,512,10);
+  t.fillStyle='#fff'; t.font='700 44px Inter,system-ui,Arial'; t.fillText(title,32,90); t.fillStyle='rgba(255,255,255,.7)'; t.font='500 26px Inter,system-ui,Arial';
+  sub.forEach((l,i)=>t.fillText(l,32,150+i*40)); const tx=new THREE.CanvasTexture(c); tx.colorSpace=THREE.SRGBColorSpace; tx.anisotropy=8;
+  const head=new THREE.Group(); head.position.set(.03,.98,0); head.rotation.z=.6; g.add(head);
+  box(.04,.42,.62,VM.trim,0,-.21,0,head); const sc=new THREE.Mesh(new THREE.PlaneGeometry(.58,.38),new THREE.MeshStandardMaterial({map:tx,emissiveMap:tx,emissive:0xffffff,emissiveIntensity:.7,roughness:.3}));
+  sc.rotation.y=Math.PI/2; sc.position.x=.022; sc.userData.noAO=true; head.add(sc); shadowify(g); EXTRA_CIR0.push([x,z,.3]); return g; }
+(function(){ const tryAt=(cands,face,args)=>{ for(const [x,z] of cands){ if(clearSpot(x,z,0,.7)){ infoStand(x,z,face(x,z),...args); return; } } };
+  const toward=(tx,tz)=>(x,z)=>Math.atan2(z-tz,x-tx)+Math.PI;
+  tryAt([[7.9,3.2],[8.2,6.4],[12.9,2.8],[13.0,6.9]],toward(VEH.car.x,VEH.car.z),['Concept car',['Open skateboard platform','Battery · e-axles · HV wiring','Hubless ring wheels'],'#3d8bff']);
+  tryAt([[4.9,6.2],[4.9,4.6],[1.0,6.0],[5.1,8.2]],toward(VEH.truck.x,VEH.truck.z-2.5),['Concept truck',['Open-frame cab structure','Battery packs · power module','Electric drive axles'],'#b04cff']);
+})();
 /* ============================ App state ============================ */
 const S={mode:'orbit',sel:null,autoHideM:false,explode:0,explodeT:0,quality:2,labels:'key',walls:'solid',auto:false,clip:false};
 const clipPlane=new THREE.Plane(new THREE.Vector3(0,-1,0),1.4);
@@ -1485,7 +1673,7 @@ const datum=new THREE.LineLoop(new THREE.BufferGeometry().setFromPoints(SLAB_MEZ
 datum.computeLineDistances(); gGuide.add(guideLines,datum); gGuide.visible=false;
 function setExplode(v){
   S.explode=v; G1.position.y=v; setExplodeForPaths(v); gGuide.visible=v>.05;
-  const c=[[XW,ZB],[XE,ZB],[XE,ZS],[XW,ZS],[STAIRS[0].x1,10.1],[STAIRS[1].x0,10.1],[X903,ZS]], pts=[]; c.forEach(p=>pts.push(P(p[0],p[1],H1),P(p[0],p[1],H1+v)));
+  const c=[[XW,ZB],[XE,ZB],[XE,ZS],[XW,ZS],[STAIRS[0].x1,(STAIRS[0].z0+STAIRS[0].z1)/2],[(STAIRS[1].x0+STAIRS[1].x1)/2,STAIRS[1].z1],[X903,ZS]], pts=[]; c.forEach(p=>pts.push(P(p[0],p[1],H1),P(p[0],p[1],H1+v)));
   guideLines.geometry.setFromPoints(pts); guideLines.computeLineDistances();
 }
 
@@ -1524,12 +1712,12 @@ function setMode(m){
 
 /* ============================ Walkthrough ============================ */
 const W={route:'pub',u:0,playing:true,yaw:0,pitch:0,ly:0,lp:0,speed:1.4,fx:2,fz:3.5,level:0,fy:0};
-const wr=r=>({x0:mx(r[0]),z0:mz(r[1]),x1:mx(r[2]),z1:mz(r[3])});
+const wr=r=>r;
 const thin=(x0,z0,x1,z1)=>({x0:Math.min(x0,x1)-.07,z0:Math.min(z0,z1)-.07,x1:Math.max(x0,x1)+.07,z1:Math.max(z0,z1)+.07});
 const axisCircles=(v,len,wid)=>{ const r=wid/2+.1, n=Math.ceil(len/wid)+1, a=THREE.MathUtils.degToRad(v.head), out=[]; for(let i=0;i<n;i++){ const o=-len/2+r+(len-2*r)*i/(n-1); out.push([v.x+Math.cos(a)*o,v.z+Math.sin(a)*o,r]); } return out; };
-const COL0=[...WALLS_G.map(wr),...RECEPTION,{x0:1.8,z0:6.45,x1:4.25,z1:13.6},thin(STAIRS[0].x0,STAIRS[0].z1,STAIRS[0].x1,STAIRS[0].z1),thin(STAIRS[1].x0,STAIRS[1].z1,STAIRS[1].x1,STAIRS[1].z1),...EXTRA_COL0];
-const CIR0=[...axisCircles(VEH.car,4.9,1.85),...axisCircles(VEH.bike,2.1,.8),...axisCircles(VEH.suv,4.45,1.9),...EXTRA_CIR0];
-const COL1=[...WALLS_M.map(wr),...RAIL_LIST.map(r=>thin(...r)),...PANTRY,thin(STAIRS[0].x0,9.2,STAIRS[0].x1,9.2),thin(STAIRS[1].x0,9.2,mx(1580),9.2)];
+const COL0=[...WALLS_G.map(wr),...RECEPTION,{x0:1.8,z0:6.45,x1:4.25,z1:13.6},thin(STAIRS[0].x0,STAIRS[0].z1,STAIRS[0].x1,STAIRS[0].z1),...EXTRA_COL0];
+const CIR0=[...axisCircles(VEH.car,4.9,1.85),...axisCircles(VEH.bike,2.1,.8),...EXTRA_CIR0];
+const COL1=[...WALLS_M.map(wr),...RAIL_LIST.map(r=>thin(...r)),...PANTRY,thin(STAIRS[0].x0,9.2,STAIRS[0].x1,9.2),{x0:24.93,z0:9.0,x1:25.17,z1:S2.z0}];
 const CIR1=[...TABLES.map(t=>[t[0],t[1],.8]),...EXTRA_CIR1];
 const inRect=(r,x,z)=>x>=r.x0&&x<=r.x1&&z>=r.z0&&z<=r.z1;
 const inPoly=(p,x,z)=>{ let c=false; for(let i=0,j=p.length-1;i<p.length;j=i++){ if((p[i][1]>z)!==(p[j][1]>z)&&x<(p[j][0]-p[i][0])*(z-p[i][1])/(p[j][1]-p[i][1])+p[i][0])c=!c; } return c; };
@@ -1574,10 +1762,10 @@ function walkStep(dt){
     const fw=(keys.has('w')||keys.has('arrowup')?1:0)-(keys.has('s')||keys.has('arrowdown')?1:0), st=(keys.has('d')?1:0)-(keys.has('a')?1:0);
     let nx=W.fx+(Math.sin(W.yaw)*fw-Math.cos(W.yaw)*st)*run*dt, nz=W.fz+(Math.cos(W.yaw)*fw+Math.sin(W.yaw)*st)*run*dt;
     let lv=W.level; const sIn=stairAt(nx,nz);
-    if(sIn){ const s0=sIn.dir>0; if(nx<sIn.x0+.5) lv=s0?0:1; if(nx>sIn.x1-.5) lv=s0?1:0; }
+    if(sIn){ const h=stairT(sIn,nx,nz); if(h<.1) lv=0; if(h>.9) lv=1; }
     [nx,nz]=lv===0?pushOut(nx,nz,COL0,CIR0):pushOut(nx,nz,COL1,CIR1);
     if(validPos(nx,nz,lv)||stairAt(nx,nz)){ W.fx=nx; W.fz=nz; W.level=lv; }
-    const s=stairAt(W.fx,W.fz), gy=s?stairY(s,W.fx):W.level*H1; W.fy=lerp(W.fy,gy+EYE,Math.min(1,dt*10));
+    const s=stairAt(W.fx,W.fz), gy=s?stairY(s,W.fx,W.fz):W.level*H1; W.fy=lerp(W.fy,gy+EYE,Math.min(1,dt*10));
     eye.set(W.fx,W.fy,W.fz); yaw=W.yaw; pitch=W.pitch;
     $('#plCap').textContent='Free walk · '+(W.level?'Mezzanine +2.5 m':'Ground floor')+' · WASD / arrows · drag to look';
   }
