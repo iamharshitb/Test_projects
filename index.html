@@ -265,7 +265,7 @@ body[data-mode=walk] #left,body[data-mode=walk] #card{display:none}
     <div class="steps"><span>Vehicles</span><span>Reception</span><span>Lounge</span><span>Research room</span></div>
     <div class="sub" style="--c:var(--oemA)"><label class="sw nm" style="--c:var(--oemA)"><input type="checkbox" id="pOemA" checked><i></i>A · Meeting rooms</label>
      <button class="walkb" data-walk="oemA"><svg class="i"><use href="#i-play"/></svg>Walk</button></div>
-    <div class="sub" style="--c:var(--oemB)"><label class="sw nm" style="--c:var(--oemB)"><input type="checkbox" id="pOemB" checked><i></i>B · Mezzanine → east exit</label>
+    <div class="sub" style="--c:var(--oemB)"><label class="sw nm" style="--c:var(--oemB)"><input type="checkbox" id="pOemB" checked><i></i>B · Mezzanine café → exit</label>
      <button class="walkb" data-walk="oemB"><svg class="i"><use href="#i-play"/></svg>Walk</button></div>
    </div>
    <div class="opts">
@@ -377,11 +377,12 @@ const ROOM={
   lounge:  rect(533,640,903,960),
   mr1:     rect(533,970,682,1167),
   mr2:     rect(691,970,901,1167),
-  research:R(13.12,12.0,24.93,18.76),
+  research:R(13.12,12.0,24.23,18.76),
   media:   R(13.12,9.23,19.14,11.89),
-  store:   R(25.17,9.23,26.77,18.76),
+  store:   R(24.47,9.23,26.77,12.8),
 };
-const RES_TILES=[R(13.12,12.0,24.93,18.76),R(19.26,3.24,24.93,12.0),R(24.93,3.24,26.77,9.0)];
+const RES_TILES=[R(13.12,12.0,24.23,18.76),R(19.26,3.24,24.23,12.0),R(24.23,3.24,26.77,9.0)];
+const ALLEY=R(24.47,12.9,25.67,17.74), EXIT_LANDING=R(24.47,17.74,26.77,18.76);
 const RES_AREA=RES_TILES.reduce((a,r)=>a+(r.x1-r.x0)*(r.z1-r.z0),0);
 
 /* Ground-floor walls as metre rectangles {x0,z0,x1,z1} (gaps = doors / openings) */
@@ -389,8 +390,10 @@ const WALLS_G=[
   rect(520,627,549,640), R(7.38,9.0,19.26,9.23),            // north wall west of / east of the lounge entrance door
   rect(520,627,533,1180), rect(520,1167,1683,1180),         // west, south
   R(19.02,3.02,19.26,9.0), R(19.02,3.02,26.99,3.24),        // north-east research wing: west + north walls (closed to the exhibition floor)
-  R(26.77,3.24,26.99,9.25), R(26.77,10.06,26.99,18.99),     // east wall (store service door 9.25-10.06)
-  R(24.93,9.0,26.77,9.23), R(24.93,9.23,25.17,18.76),       // store strip: north + west walls
+  R(26.77,3.24,26.99,17.85), R(26.77,18.7,26.99,18.99),    // east wall (exit door at the foot of Stair 2: 17.85-18.70)
+  R(24.23,9.0,26.77,9.23), R(24.23,9.23,24.47,18.76),       // east strip (widened to fit the 1.2 m alley): north + west walls
+  R(24.47,12.8,24.62,12.9), R(25.52,12.8,26.77,12.9),       // store room south wall (door 24.62-25.52 from the alley)
+  R(25.67,12.9,25.77,17.74),                                // partition between the service alley (west) and Stair 2 (east)
   R(12.9,9.23,13.12,11.0), R(12.9,11.87,13.12,12.49), rect(903,930,915,1167), // lounge east wall (media door, research double door)
   R(13.12,11.88,19.26,12.0), R(19.14,9.23,19.26,11.88),     // media room: south + east walls
   rect(520,960,631,970), rect(676,960,697,970), rect(742,960,903,970), rect(682,970,691,1167), // meeting rooms
@@ -401,7 +404,8 @@ const WALLS_M=[rect(903,1167,1683,1180),rect(1670,627,1683,1180)];
 const DOORS=[
   {id:'D1',name:'Lounge entrance door',cx:mx(573.5),cz:mz(633.5),w:.88,ori:'h',hinge:-1,into:1},
   {id:'D2',name:'Media room door (from lounge)',cx:13.01,cz:11.435,w:.86,ori:'v',hinge:1,into:1},
-  {id:'D3',name:'Store room service door (east wall)',cx:26.88,cz:9.655,w:.8,ori:'v',hinge:-1,into:-1},
+  {id:'D3',name:'Store room door (from the service alley)',cx:25.07,cz:12.85,w:.9,ori:'h',hinge:-1,into:-1},
+  {id:'D7',name:'Staff / service exit door (foot of Stair 2)',cx:26.88,cz:18.275,w:.85,ori:'v',hinge:1,into:1},
   {id:'D4',name:'Meeting room 1 door',cx:mx(653.5),cz:mz(965),w:.8,ori:'h',hinge:-1,into:1},
   {id:'D5',name:'Meeting room 2 door',cx:mx(719.5),cz:mz(965),w:.8,ori:'h',hinge:1,into:1},
   {id:'D6',name:'Research room double door',cx:mx(909),cz:mz(875),w:1.98,ori:'v',double:true,into:-1},
@@ -411,7 +415,7 @@ const DOORS=[
 const NSTEP=17;
 const STAIRS=[
   {id:'S1',name:'Stair 1 – up to Mezzanine',x0:mx(636),x1:mx(903),z0:mz(640),z1:mz(738),dir:1,axis:'x'},
-  {id:'S2',name:'Stair 2 – down to store & service exit',x0:25.17,x1:26.77,z0:12.06,z1:16.9,dir:1,axis:'z'},
+  {id:'S2',name:'Stair 2 – staff service stair',x0:25.77,x1:26.77,z0:12.9,z1:17.74,dir:-1,axis:'z'},
 ];
 const stairT=(s,x,z)=>{ const t=s.axis==='z'?(z-s.z0)/(s.z1-s.z0):(x-s.x0)/(s.x1-s.x0); return clamp(s.dir>0?t:1-t,0,1); };
 const stairY=(s,x,z)=>H1*stairT(s,x,z);
@@ -419,7 +423,8 @@ const stairY=(s,x,z)=>H1*stairT(s,x,z);
 /* Slabs at +2.5 m (polygons in x,z) */
 const Z_SPLIT=mz(960);
 const S2=STAIRS[1];
-const SLAB_MEZZ=[[X903,ZB],[XE,ZB],[XE,S2.z0],[S2.x0,S2.z0],[S2.x0,S2.z1],[XE,S2.z1],[XE,ZS],[X903,ZS]];
+const SLAB_MEZZ=[[X903,ZB],[XE,ZB],[XE,ZS],[X903,ZS]];
+const MEZZ_HOLE=[[S2.x0,S2.z0],[S2.x1,S2.z0],[S2.x1,S2.z1],[S2.x0,S2.z1]];   // Stair 2 opening (mezzanine floor continues over the alley)
 const SLAB_LOUNGE=[[XW,ZB],[mx(636),ZB],[mx(636),mz(738)],[X903,mz(738)],[X903,Z_SPLIT],[XW,Z_SPLIT]];
 const SLAB_MEET=[[XW,Z_SPLIT],[X903,Z_SPLIT],[X903,ZS],[XW,ZS]];
 const SLAB_WING=[[19.02,3.02],[XE,3.02],[XE,ZB],[19.02,ZB]];
@@ -435,9 +440,11 @@ const ZONES=[
   {id:'Z2',x:mx(1107),z:mz(362),hd:237*K,col:0x7a5c8e,clipX:19.0},
 ];
 const RECEPTION=[ {x0:mx(632),z0:mz(522),x1:mx(780),z1:mz(547)}, {x0:mx(755),z0:mz(522),x1:mx(780),z1:mz(598)} ];
-const PANTRY=[ {x0:mx(1173),z0:mz(638),x1:mx(1207),z1:mz(810)}, {x0:mx(1173),z0:mz(778),x1:mx(1410),z1:mz(810)} ];
-/* mezzanine café tables: columns shifted west to clear the new Stair 2 opening on the east side */
-const TABLES=[mz(922),mz(1085)].flatMap(z=>[15.6,18.2,20.8,23.4].map(x=>[x,z]));
+/* mezzanine serving counter (visitor side faces west/north) + tall back-bars that screen the Stair 2 opening (staff only) */
+const PANTRY=[ R(23.9,11.0,24.5,18.76), R(23.9,11.0,26.77,11.6) ];
+const BACKBAR=[ R(25.45,12.9,25.77,17.74), R(24.5,11.6,26.77,11.9) ];
+/* mezzanine café tables: columns shifted west to leave a queue space in front of the serving counter */
+const TABLES=[mz(922),mz(1085)].flatMap(z=>[14.4,16.9,19.4,21.9].map(x=>[x,z]));
 const sqm=r=>(r.x1-r.x0)*(r.z1-r.z0);
 /* ============================ Renderer / scene ============================ */
 const $=s=>document.querySelector(s), $$=s=>[...document.querySelectorAll(s)];
@@ -523,8 +530,9 @@ function rrShape(w,h,r){const s=new THREE.Shape(),x=-w/2,y=-h/2;r=Math.min(r,w/2
 function rbox(w,h,d,r,mat,bev=.02){ // rounded box, centred at origin
   const g=new THREE.ExtrudeGeometry(rrShape(w,h,r),{depth:Math.max(d-2*bev,.001),bevelEnabled:true,bevelThickness:bev,bevelSize:bev*.9,bevelSegments:2,curveSegments:6});
   g.translate(0,0,-(d-2*bev)/2); const m=new THREE.Mesh(g,mat); m.castShadow=m.receiveShadow=true; return m; }
-function polyMesh(pts,thick,top,mat){ // polygon in (x,z), top face at y=top, extends down by thick
+function polyMesh(pts,thick,top,mat,holes=[]){ // polygon in (x,z), top face at y=top, extends down by thick
   const s=new THREE.Shape(pts.map(p=>new THREE.Vector2(p[0],p[1])));
+  holes.forEach(h=>s.holes.push(new THREE.Path(h.map(p=>new THREE.Vector2(p[0],p[1])))));
   const g=new THREE.ExtrudeGeometry(s,{depth:thick,bevelEnabled:false}); g.rotateX(Math.PI/2);
   const m=new THREE.Mesh(g,mat); m.position.y=top; m.castShadow=m.receiveShadow=true; return m; }
 function pxBox(r,y0,y1,mat,parent){ // wall from a metre rect {x0,z0,x1,z1}
@@ -657,7 +665,7 @@ function rail(parent,x0,z0,x1,z1,y0=H1,h=1.05){
 }
 const gRails1=new THREE.Group(); G1.add(gRails1);
 const RAIL_LIST=[[X903,ZB+.07,XE-.1,ZB+.07],                                   // mezzanine north edge
- [S2.x0-.02,S2.z0,S2.x0-.02,S2.z1],[S2.x0,S2.z0+.02,XE-.23,S2.z0+.02],          // Stair-2 opening (open at its south end = top landing)
+ [S2.x0,S2.z1+.02,S2.x1,S2.z1+.02],                                       // Stair-2 opening: south rail (west side is closed by the back-bar)
  [X903-.02,mz(738),X903-.02,ZS-.05],                                       // divider mezzanine | lounge deck
  [XW+.05,ZB+.07,XW+.05,ZS-.05],[XW+.05,ZS-.07,X903,ZS-.07],[XW+.05,ZB+.07,mx(636),ZB+.07], // deck parapets
  [mx(636),ZB+.1,mx(636),mz(738)],[mx(636),mz(738),X903,mz(738)],           // stair-1 opening
@@ -669,11 +677,12 @@ RAIL_LIST.forEach(r=>rail(gRails1,...r));
 function floorTile(r,mat,par=gFloors){ const m=box(r.x1-r.x0,.03,r.z1-r.z0,mat,(r.x0+r.x1)/2,0,(r.z0+r.z1)/2,par);
   const p=m.geometry.attributes.position, uv=m.geometry.attributes.uv; for(let i=0;i<p.count;i++) uv.setXY(i,p.getX(i)+m.position.x,p.getZ(i)+m.position.z); uv.needsUpdate=true; return m; }
 const FT={}; for(const k of ['lounge','mr1','mr2','media','store']) FT[k]=floorTile(ROOM[k],MATS['fl_'+k]);
+const gAlley=new THREE.Group(); gFloors.add(gAlley); [ALLEY,EXIT_LANDING].forEach(r=>edgeify(floorTile(r,MATS.fl_store,gAlley),EDGE_SOFT));
 FT.research=new THREE.Group(); gFloors.add(FT.research); RES_TILES.forEach(r=>floorTile(r,MATS.fl_research,FT.research));
 
 /* slabs at +2.5 m */
 const gSlabs=new THREE.Group(); G1.add(gSlabs);
-const slabMezz=polyMesh(SLAB_MEZZ,SLAB,H1,MATS.slabTop), slabLounge=polyMesh(SLAB_LOUNGE,SLAB,H1,MATS.deck), slabMeet=polyMesh(SLAB_MEET,SLAB,H1,MATS.deck), slabWing=polyMesh(SLAB_WING,SLAB,H1,MATS.deck);
+const slabMezz=polyMesh(SLAB_MEZZ,SLAB,H1,MATS.slabTop,[MEZZ_HOLE]), slabLounge=polyMesh(SLAB_LOUNGE,SLAB,H1,MATS.deck), slabMeet=polyMesh(SLAB_MEET,SLAB,H1,MATS.deck), slabWing=polyMesh(SLAB_WING,SLAB,H1,MATS.deck);
 gSlabs.add(slabMezz,slabLounge,slabMeet,slabWing);
 const roof=polyMesh(SLAB_MEZZ,.08,H2+.1,MATS.roof); roof.castShadow=false; roof.visible=false; G1.add(roof);
 
@@ -726,13 +735,16 @@ roomEl('G1','Lounge Area','lounge','Arrival and waiting lounge. Entered from the
 roomEl('G2','Research Room','research','Largest room in the stall, now L-shaped: the main hall behind the lounge plus a walled wing in the north-east corner (where the SUV used to be). Entered only from the lounge through the 2.0 m double door; the wing has no door to the exhibition floor. The plan still labels it 990 sq ft, which matches the old rectangle.',['OEM'],
   {dims:'L-shaped · 11.8 × 6.8 m main hall + 7.5 × 8.8 m wing',area:fmtA(RES_AREA)+' (measured from the updated plan)',focus:{dist:22},obj:FT.research,ax:20.5,az:13.2});
 roomEl('G3','Media Room','media','Media room with a three-seat sofa on the north wall and a six-seat meeting table. Now entered from the lounge through a door next to the top of Stair 1.',['OEM']);
-roomEl('G4','Store Room','store','Narrow back-of-house strip along the east wall. Holds Stair 2 (down from the mezzanine) and has a service door in the east wall, which is the OEM exit after the mezzanine.',['OEM·B']);
+roomEl('G4','Store Room','store','Back-of-house store at the front end of the east strip, beside the top of the staff stair. Reached only through the 1.2 m service alley that runs beside Stair 2 from the service landing. Staff only.',[]);
+reg({id:'C1',name:'Service alley & landing',cat:'circ',level:0,obj:gAlley,ax:25.07,az:15.6,ay:2.4,key:false,tags:[],
+  dims:'alley 1.2 × 4.8 m · landing 2.3 × 1.0 m',height:'2.5 m (under the mezzanine)',area:'',
+  desc:'Staff-only service zone. The landing at the foot of Stair 2 has the service exit door in the east wall; the 1.2 m alley runs north from the landing, on the west side of the stair, to the store room door.'});
 roomEl('G5','Meeting Room 1','mr1','Four-seat meeting room with a central table. Door opens onto the lounge.',['OEM·A']);
 roomEl('G6','Meeting Room 2','mr2','Six-seat meeting room with a long table. Door opens onto the lounge.',['OEM·A']);
 
 reg({id:'M1',name:'Mezzanine Floor',cat:'mezz',level:1,obj:slabMezz,ax:20.6,az:15.2,ay:H1+1.7,key:true,tags:['OEM','OEM·B'],
   dims:'14.1 × 10.0 m (approx.)',height:'2.5 m clear (+2.5 → +5.0 m)',area:'≈ 133 m² (excl. Stair 2 opening)',
-  desc:'Seating / hospitality level above the Research, Media and Store rooms. Eight four-seat tables and a pantry. Reached by Stair 1; left by Stair 2, whose opening now sits on the east side (the café tables are shifted west to clear it). No updated mezzanine plan was supplied, so the opening position is inferred from the new ground floor.'});
+  desc:'Seating / hospitality level above the Research, Media and Store rooms. Eight four-seat tables and a pantry. Visitors come up and go down by Stair 1. The serving counter on the east side, with a tall back-bar behind it, screens the opening of Stair 2, a staff-only service stair down to the store room. No updated mezzanine plan was supplied, so this arrangement is inferred.'});
 reg({id:'M5',name:'Research Wing Roof Slab',cat:'mezz',level:1,obj:slabWing,ay:H1+.6,key:false,tags:[],
   dims:'8.0 × 6.0 m',height:'Slab at +2.5 m',area:'not shown on the plans',desc:'Closed roof over the new north-east research wing, modelled like the other single-storey roofs. The plans do not show it, so treat it as an assumption.'});
 reg({id:'M3',name:'Lounge Roof Slab',cat:'mezz',level:1,obj:slabLounge,ay:H1+.6,key:false,tags:[],
@@ -742,12 +754,12 @@ reg({id:'M4',name:'Meeting Rooms Roof Slab',cat:'mezz',level:1,obj:slabMeet,ay:H
   dims:`${(X903-XW).toFixed(1)} × ${(ZS-Z_SPLIT).toFixed(1)} m`,height:'Slab at +2.5 m',area:'hatched on the mezzanine plan',
   desc:'Vertically-hatched region of the mezzanine plan above the two Meeting Rooms. Modelled as a closed slab with a parapet.'});
 
-STAIRS.forEach((s,i)=>reg({id:s.id,name:s.name,cat:'circ',level:0,obj:stairObjs[i],key:true,ay:H1+.9,tags:i===0?['OEM·B']:['OEM·B'],
+STAIRS.forEach((s,i)=>reg({id:s.id,name:s.name,cat:'circ',level:0,obj:stairObjs[i],key:true,ay:H1+.9,tags:i===0?['OEM·B']:[],
   dims:s.axis==='z'?`${(s.z1-s.z0).toFixed(2)} m run × ${(s.x1-s.x0).toFixed(2)} m wide`:`${(s.x1-s.x0).toFixed(2)} m run × ${(s.z1-s.z0).toFixed(2)} m wide`,height:'Rise 2.5 m · 17 risers of 147 mm',area:'',
   desc:i===0?'Climbs east from the Lounge to the Mezzanine floor at +2.5 m. Open to the lounge on its south side.'
-           :'Runs north–south inside the store-room strip on the east wall. From the mezzanine it descends northwards into the store room, whose service door in the east wall is the OEM exit.'}));
+           :'Staff-only service stair in the east strip, against the back (south-east) corner. Its opening on the mezzanine is screened by the serving counter and back-bar, so visitors do not see it. At the bottom: the service landing, exit door and the alley to the store room.'}));
 DOORS.forEach(d=>reg({id:d.id,name:d.name,cat:'circ',level:0,obj:doorObjs[d.id],key:false,ay:2.6,
-  tags:d.id==='D1'||d.id==='D6'?['OEM']:d.id==='D4'||d.id==='D5'?['OEM·A']:d.id==='D3'?['OEM·B']:['OEM'],
+  tags:d.id==='D1'?['OEM','OEM·B']:d.id==='D6'?['OEM']:d.id==='D4'||d.id==='D5'?['OEM·A']:d.id==='D7'||d.id==='D3'?[]:['OEM'],
   dims:`${d.w.toFixed(2)} m clear width`,height:'2.1 m',area:'',desc:'Door shown open about 70° as on the plan swing arc.'}));
 /* ============================ Vehicles (procedural, detailed; front = +x, right = +z) ============================ */
 const paint=(c,m=.6,r=.32)=>new THREE.MeshPhysicalMaterial({color:c,metalness:m,roughness:r,clearcoat:1,clearcoatRoughness:.05,envMapIntensity:1.3});
@@ -907,8 +919,9 @@ function buildTruck(){
   return g; }
 /* ============================ Concept display vehicles (open-frame show models, per reference photos) ============================ */
 const CM={
-  white:new THREE.MeshPhysicalMaterial({color:0xf4f5f6,roughness:.22,metalness:0,clearcoat:1,clearcoatRoughness:.08,envMapIntensity:1.05}),
-  matte:new THREE.MeshStandardMaterial({color:0xe6e8ea,roughness:.55,envMapIntensity:.8}),
+  white:new THREE.MeshPhysicalMaterial({color:0xc9cdd2,roughness:.24,metalness:.05,clearcoat:1,clearcoatRoughness:.08,envMapIntensity:1.05}),   /* light grey body (as requested) */
+  plinth:new THREE.MeshPhysicalMaterial({color:0xf4f5f6,roughness:.22,metalness:0,clearcoat:1,clearcoatRoughness:.08,envMapIntensity:1.05}),
+  matte:new THREE.MeshStandardMaterial({color:0xb7bcc2,roughness:.55,envMapIntensity:.8}),
   grey:new THREE.MeshStandardMaterial({color:0xaeb4bb,roughness:.35,metalness:.35}),
   dark:new THREE.MeshStandardMaterial({color:0x2a2e35,roughness:.45,metalness:.3}),
   blue:new THREE.MeshStandardMaterial({color:0x0d2f6e,emissive:0x2f86ff,emissiveIntensity:2.0,roughness:.3}),
@@ -1016,7 +1029,7 @@ function buildConceptTruck(){
 /* sculpted white plinth for the concept car (thick, chamfered, light line at the foot) */
 function conceptPlinth(L,W,H){ const g=new THREE.Group(), s=new THREE.Shape(), r=.5, x=-L/2,y=-W/2;
   s.moveTo(x+r,y); s.lineTo(x+L-r,y); s.quadraticCurveTo(x+L,y,x+L,y+r); s.lineTo(x+L,y+W-r); s.quadraticCurveTo(x+L,y+W,x+L-r,y+W); s.lineTo(x+r,y+W); s.quadraticCurveTo(x,y+W,x,y+W-r); s.lineTo(x,y+r); s.quadraticCurveTo(x,y,x+r,y);
-  const top=new THREE.Mesh(new THREE.ExtrudeGeometry(s,{depth:H-.08,bevelEnabled:true,bevelThickness:.04,bevelSize:.07,bevelSegments:4,curveSegments:12}),CM.white);
+  const top=new THREE.Mesh(new THREE.ExtrudeGeometry(s,{depth:H-.08,bevelEnabled:true,bevelThickness:.04,bevelSize:.07,bevelSegments:4,curveSegments:12}),CM.plinth);
   top.rotation.x=-Math.PI/2; top.position.y=.04; top.castShadow=top.receiveShadow=true; g.add(top);
   const led=new THREE.Mesh(new THREE.ExtrudeGeometry(s,{depth:.03,bevelEnabled:false,curveSegments:12}),CM.blue); led.scale.set((L-.1)/L,(W-.1)/W,1); led.rotation.x=-Math.PI/2; g.add(led);
   return g; }
@@ -1036,9 +1049,9 @@ const vCar=(()=>{ const root=new THREE.Group(); root.position.set(VEH.car.x,0,VE
   root.add(conceptPlinth(5.4,2.4,CAR_PL_H)); const c=buildConceptCar(); c.position.y=CAR_PL_H; root.add(c); shadowify(root); GX.add(root); return root; })();
 const vBike=placeVeh(buildBike(),VEH.bike,[2.5,1.15]), vTruck=placeVeh(buildConceptTruck(),VEH.truck);
 const vehEl=(id,name,obj,dims,h,desc)=>reg({id,name,cat:'veh',level:0,obj,key:true,tags:['Public','OEM'],dims,height:h,area:'',desc,ay:Math.max(2.1,parseFloat(h)+.6)});
-vehEl('V1','Concept car (open-frame show model)',vCar,'≈ 4.9 × 1.75 m on a 5.4 × 2.4 m sculpted plinth','1.7 m (+0.3 m plinth)','Open-frame concept car as in the reference photo: a glossy white swept frame over an exposed skateboard chassis with glowing battery modules, e-axles, HV cabling, sculpted seats and hubless ring wheels with blue light. Sits on a thick white plinth on display zone Z1, at about 42° to the grid as on the plan.');
+vehEl('V1','Concept car (open-frame show model)',vCar,'≈ 4.9 × 1.75 m on a 5.4 × 2.4 m sculpted plinth','1.7 m (+0.3 m plinth)','Open-frame concept car as in the reference photo, finished in light grey: a glossy swept frame over an exposed skateboard chassis with glowing battery modules, e-axles, HV cabling, sculpted seats and hubless ring wheels with blue light. Sits on a thick white plinth on display zone Z1, at about 42° to the grid as on the plan.');
 vehEl('V2','Motorcycle',vBike,'≈ 2.1 × 0.8 m on a 2.5 × 1.15 m lit plinth','1.3 m','Showcase motorcycle on display zone Z2, resting on its side stand.');
-vehEl('V3','Concept truck (open-frame show model)',vTruck,'≈ 7.1 × 2.3 m','3.1 m','Open-frame concept truck as in the reference photo: a tall C-shaped white cab arch with roof canopy and rear slats, a low skateboard chassis showing battery packs, a power module on a pedestal, e-axles and HV cabling, and hubless ring wheels. Parked on the west edge, cab pointing north. Longest single exhibit in the stall.');
+vehEl('V3','Concept truck (open-frame show model)',vTruck,'≈ 7.1 × 2.3 m','3.1 m','Open-frame concept truck as in the reference photo, finished in light grey: a tall C-shaped cab arch with roof canopy and rear slats, a low skateboard chassis showing battery packs, a power module on a pedestal, e-axles and HV cabling, and hubless ring wheels. Parked on the west edge, cab pointing north. Longest single exhibit in the stall.');
 
 /* ============================ Display zones ============================ */
 /* clip a polygon (x,z pairs) to x <= xc */
@@ -1131,14 +1144,23 @@ TABLES.forEach(([x,z],i)=>{
 });
 
 const gPantry=new THREE.Group(); gPantry.position.y=H1; gFurn1.add(gPantry);
+const fm=(c,r=.5)=>new THREE.MeshStandardMaterial({color:c,roughness:r});
+/* serving counter: oak front, quartz top, glass display case and coffee station on the visitor side */
 PANTRY.forEach(r=>{ const w=r.x1-r.x0,d=r.z1-r.z0,cx=(r.x0+r.x1)/2,cz=(r.z0+r.z1)/2;
-  box(w,.88,d,MATS.pantry,cx,0,cz,gPantry); box(w+.03,.04,d+.03,MATS.quartz,cx,.88,cz,gPantry); });
-const cx0=(PANTRY[1].x0+PANTRY[1].x1)/2; // appliances on the horizontal arm
-box(.5,.4,.45,MATS.steel,cx0-.8,.92,PANTRY[1].z0+.3,gPantry); box(.35,.3,.3,MATS.dark,cx0+.4,.92,PANTRY[1].z0+.3,gPantry);
-cyl(.2,.3,MATS.steel,cx0+1.1,1.07,PANTRY[1].z0+.3,gPantry,20);
+  box(w,1.0,d,MATS.timber,cx,0,cz,gPantry); box(w+.04,.04,d+.04,MATS.quartz,cx,1.0,cz,gPantry); box(w+.02,.08,d+.02,MATS.dark,cx,0,cz,gPantry); });
+const caseG=new THREE.Mesh(new THREE.BoxGeometry(.5,.32,1.6),MATS.glass); caseG.position.set(24.2,1.2,14.2); gPantry.add(caseG);
+for(let i=0;i<6;i++) cyl(.06,.05,fm([0xc9935a,0xe6d2b5,0x7a4a2a][i%3],.6),24.1+(i%2)*.18,1.07,13.6+Math.floor(i/2)*.45,gPantry,14);
+box(.45,.5,.4,MATS.steel,24.2,1.04,16.0,gPantry); box(.3,.12,.25,MATS.dark,24.2,1.4,16.0,gPantry); cyl(.08,.18,MATS.steel,24.2,1.13,16.6,gPantry,16);
+for(let i=0;i<5;i++) cyl(.04,.1,fm(0xf4f4f2,.3),24.15,1.07,17.0+i*.12,gPantry,12);
+/* tall back-bars (2.2 m) with shelves – they hide the Stair 2 opening from visitors */
+BACKBAR.forEach(r=>{ const w=r.x1-r.x0,d=r.z1-r.z0,cx=(r.x0+r.x1)/2,cz=(r.z0+r.z1)/2;
+  box(w,2.2,d,MATS.timber,cx,0,cz,gPantry);
+  const along=d>w; for(let k=0;k<3;k++){ box(along?.04:w,.03,along?d:.04,MATS.quartz,along?r.x0-.02:cx,1.05+k*.4,along?cz:r.z0-.02,gPantry); } });
+for(let k=0;k<14;k++){ const z=13.2+k*.32; cyl(.035,.24,fm([0x2f5a3a,0x6b2a2a,0x8a6a2a,0xd9d4c8][k%4],.3),25.42,1.17+(k%3)*.4,z,gPantry,10); }
 shadowify(gPantry);
-reg({id:'M2',name:'Pantry Area',cat:'mezz',level:1,obj:gPantry,key:true,tags:['OEM·B'],ay:H1+1.5,
-  dims:'L-counter 4.3 m + 3.1 m, 0.6 m deep',height:'0.9 m counter',area:'',desc:'L-shaped pantry counter on the mezzanine with a prep zone behind it, next to the head of Stair 2.'});
+reg({id:'M2',name:'Serving counter & back bar',cat:'mezz',level:1,obj:gPantry,key:true,tags:['OEM·B'],ay:H1+2.6,ax:24.2,az:14.3,
+  dims:'L-counter 7.8 m + 2.9 m, 0.6 m deep · back-bars 2.2 m high',height:'1.04 m counter',area:'',
+  desc:'Café serving counter along the east side of the mezzanine. Visitors are served from the west; staff work in the aisle behind. Tall back-bar shelving screens the opening of Stair 2, the staff-only service stair that leads straight down to the store room.'});
 
 [gFurn0,gFurn1].forEach(g=>edgeify(g,EDGE_SOFT,35));
 /* furniture footprints for walk-mode collisions */
@@ -1256,10 +1278,11 @@ const SEG={
   /* OEM main: same vehicle loop, then reception → lounge → research room */
   oemMain:{css:'#e8772e',hex:0xe8772e,pts:PP([[-.4,3.0],[3.2,4.4],[5.0,1.7],[10.6,.9],[14.7,1.0],[17.2,1.25],[18.4,2.7],[18.45,5.6],[17.5,7.7],[15.3,7.7],[14.3,6.4],[14.3,3.0],[13.2,1.9],[10.6,1.9],[7.6,2.7],[6.5,4.8],[6.7,7.0],[6.95,8.2],[6.95,9.1],[6.95,10.5],[8.0,12.3],[11.4,13.4],[13.0,13.4],[15.2,13.5],[18.0,15.0]])},
   oemA:{css:'#f0a040',hex:0xf0a040,pts:PP([[18.0,15.0],[15.4,14.2],[13.0,13.9],[10.8,14.0],[8.6,14.3],[8.4,15.0],[8.45,15.8],[8.36,15.55],[8.42,14.8],[8.75,14.3],[9.55,14.4],[9.58,15.05],[9.62,15.42],[9.92,15.6]])},
-  /* OEM B: research → Stair 1 → mezzanine → pantry → Stair 2 (east) → store room → service door → exit east */
+  /* OEM B: research → Stair 1 up → café tables → serving counter → back down Stair 1 → lounge → leave by the lounge door → exit west.
+     Stair 2 is a staff-only service stair hidden behind the serving counter. */
   oemB:{css:'#c9541c',hex:0xc9541c,pts:[...PP([[18.0,15.0],[15.4,14.2],[13.0,13.9],[11.4,13.6],[9.2,12.6],[7.5,11.6],[7.55,10.1]]),...ramp(STAIRS[0],false),
-        ...PP([[14.2,10.8,H1],[15.0,12.7,H1],[17.0,12.95,H1],[20.5,12.95,H1],[22.6,12.7,H1],[22.65,11.35,H1],[21.2,11.15,H1],[19.6,10.6,H1],[20.8,10.15,H1],[22.7,10.3,H1],[24.5,11.7,H1],[24.6,13.5,H1],[24.62,16.4,H1],[24.9,17.6,H1],[25.6,17.85,H1],[25.97,17.35,H1]]),
-        ...ramp(STAIRS[1],true),...PP([[25.97,11.2],[25.97,10.3],[26.4,9.8],[27.3,9.75],[28.1,9.75]])]},
+        ...PP([[14.2,10.6,H1],[16.5,12.2,H1],[20.5,12.3,H1],[23.25,12.7,H1],[23.3,14.4,H1],[23.25,15.85,H1],[20.5,15.85,H1],[18.15,15.6,H1],[18.15,13.2,H1],[16.0,11.8,H1],[13.75,10.6,H1]]),
+        ...ramp(STAIRS[0],true),...PP([[7.4,10.45],[6.95,9.7],[6.95,8.5],[6.55,7.0],[5.6,6.15],[4.4,5.9],[1.5,5.9],[-.5,5.9]])]},
 };
 const ROUTES={pub:['pub'],oemA:['oemMain','oemA'],oemB:['oemMain','oemB']};
 const STOPS=[
@@ -1267,7 +1290,7 @@ const STOPS=[
   {seg:'pub',n:5,t:'Public exit',p:P(14.7,-.8)},
   {seg:'oemMain',n:1,t:'OEM entry',p:P(-.2,3.9)},{seg:'oemMain',n:2,t:'Reception',p:P(6.7,7.0)},{seg:'oemMain',n:3,t:'Lounge',p:P(6.95,10.5)},{seg:'oemMain',n:4,t:'Research Room',p:P(18.0,15.0)},
   {seg:'oemA',n:5,t:'Meeting Room 1',p:P(8.45,15.8)},{seg:'oemA',n:6,t:'Meeting Room 2',p:P(9.92,15.6)},
-  {seg:'oemB',n:5,t:'Mezzanine',p:P(17.0,12.95,H1)},{seg:'oemB',n:6,t:'Pantry',p:P(19.6,10.6,H1)},{seg:'oemB',n:7,t:'Store room',p:P(25.97,10.6)},{seg:'oemB',n:8,t:'OEM exit (east)',p:P(27.6,9.75)},
+  {seg:'oemB',n:5,t:'Mezzanine café',p:P(16.5,12.2,H1)},{seg:'oemB',n:6,t:'Serving counter',p:P(23.25,14.4,H1)},{seg:'oemB',n:7,t:'OEM exit (west)',p:P(-.3,5.9)},
 ];
 STOPS.forEach(s=>{ s.css=SEG[s.seg].css; s.tag=s.seg==='pub'?'P':'O'; });
 
@@ -1370,15 +1393,22 @@ seatAt(mx(745)-.03,mz(1060),0,'exec'); seatAt(mx(849)+.03,mz(1022),Math.PI,'visi
 /* media room: two at the table */
 seatAt(16.6,9.82,0,'visitor'); seatAt(18.28,10.48,Math.PI,'exec'); seatAt(18.28,11.19,Math.PI,'visitor');
 /* research room: presenter at the LED wall and three listeners */
-addPerson(gPeople0,23.9,.03,15.4,Math.PI,'talk','staff',0,.3);
-addPerson(gPeople0,21.9,.03,14.8,0,'folded','exec',0,.1);
-addPerson(gPeople0,21.7,.03,16.1,0,'stand','visitor',0,-.1);
-addPerson(gPeople0,21.0,.03,15.5,0,'tablet','exec',0,0);
+addPerson(gPeople0,23.55,.03,15.0,Math.PI,'talk','staff',0,.3);
+addPerson(gPeople0,21.8,.03,14.4,0,'folded','exec',0,.1);
+addPerson(gPeople0,21.6,.03,15.6,0,'stand','visitor',0,-.1);
+addPerson(gPeople0,20.9,.03,15.0,0,'tablet','exec',0,0);
+/* research main hall: visitors at the wall stations */
+addPerson(gPeople0,15.3,.03,17.1,Math.PI/2,'point','exec',0,0);
+addPerson(gPeople0,18.4,.03,17.15,Math.PI/2,'folded','visitor',0,.2);
+addPerson(gPeople0,17.6,.03,17.2,Math.PI/2,'stand','staff',0,-.3);
 /* research wing: engineers at the demo stations */
 addPerson(gPeople0,22.9,.03,5.45,-Math.PI/2-.4,'talk','staff',0,.3);
 addPerson(gPeople0,21.6,.03,5.55,-Math.PI/2,'stand','exec',0,0);
 addPerson(gPeople0,21.8,.03,7.05,Math.PI/2,'point','exec',0,0);
 addPerson(gPeople0,23.8,.03,5.9,0,'folded','visitor',0,.2);
+/* mezzanine: two staff behind the serving counter */
+addPerson(gPeople1,24.98,H1,13.8,Math.PI,'stand','staff',1,.2,false);
+addPerson(gPeople1,24.98,H1,16.3,Math.PI,'tablet','staff',1,-.2,false);
 /* mezzanine: guests at the café tables */
 const SEATED=[2,0,3,1,2,1,0,2], CH=[[1,1],[-1,-1],[1,-1],[-1,1]];
 TABLES.forEach(([x,z],i)=>{ for(let k=0;k<SEATED[i];k++){ const [a,b]=CH[k]; addPerson(gPeople1,x+a*.6,H1,z+b*.6,Math.atan2(-b,-a),'seat',crand()<.5?'exec':'visitor',1,(crand()-.5)*.5,false); } });
@@ -1453,7 +1483,7 @@ function screen(par,w,h,x,y,z,rotY,title,sub){ const g=new THREE.Group(); g.posi
   box(w+.06,h+.06,.06,VM.trim,0,-h/2-.03,0,g); const t=screenTex(title,sub);
   const p=new THREE.Mesh(new THREE.PlaneGeometry(w,h),new THREE.MeshStandardMaterial({map:t,emissiveMap:t,emissive:0xffffff,emissiveIntensity:.8,roughness:.3})); p.position.z=.031; p.userData.noAO=true; g.add(p); return g; }
 const gDress0=new THREE.Group(); G0.add(gDress0); furnGroups.push(gDress0);
-const ledWall=screen(gDress0,3.6,2.03,24.9,1.4,15.4,-Math.PI/2,'BMGE 2027','Research & innovation showcase');
+const ledWall=screen(gDress0,3.6,2.03,24.19,1.4,15.0,-Math.PI/2,'BMGE 2027','Research & innovation showcase');
 reg({id:'F5',name:'Research LED wall',cat:'furn',level:0,obj:ledWall,key:false,tags:['OEM'],ay:2.8,dims:'3.6 × 2.0 m LED wall',height:'bottom edge at +0.4 m',area:'',
   desc:'Presentation LED wall on the research room side of the store-room wall, with a presenter and a small audience. Indicative: not drawn on the plans.'});
 screen(gDress0,1.45,.82,mx(797),1.35,mz(1167)-.03,Math.PI,'Meeting Room 2','OEM partner sessions');
@@ -1474,9 +1504,9 @@ function makePlant(h=1.4){
 function placePlant(par,x,y,z,lvl,h){ if(!clearSpot(x,z,lvl,.85))return; const m=makePlant(h); m.position.set(x,y,z); m.rotation.y=crand()*6; par.add(m); (lvl?EXTRA_CIR1:EXTRA_CIR0).push([x,z,.3]); }
 const gPlantsX=new THREE.Group(); GX.add(gPlantsX); furnGroups.push(gPlantsX);
 [[.5,.5],[.5,8.5],[26.5,.5],[11.3,8.55],[5.5,.6],[18.6,8.55],[19.5,.5]].forEach(([x,z])=>placePlant(gPlantsX,x,0,z,0,1.5));
-[[13.55,12.6],[13.55,18.35],[24.5,12.45],[24.5,18.35],[19.7,3.7],[26.35,3.7],[19.7,11.5]].forEach(([x,z])=>placePlant(gDress0,x,.03,z,0,1.3));
+[[13.55,12.6],[13.55,18.35],[23.8,12.4],[23.8,18.35],[19.7,3.7],[26.35,3.7],[19.7,11.5]].forEach(([x,z])=>placePlant(gDress0,x,.03,z,0,1.3));
 const gDress1=new THREE.Group(); G1.add(gDress1); furnGroups.push(gDress1);
-[[13.4,18.5],[24.2,18.5],[26.5,9.6],[13.4,13.6]].forEach(([x,z])=>placePlant(gDress1,x,H1,z,1,1.3));
+[[13.4,18.5],[23.4,18.45],[26.5,9.6],[13.4,13.4]].forEach(([x,z])=>placePlant(gDress1,x,H1,z,1,1.3));
 /* lounge rug + coffee table */
 (function(){ const rug=new THREE.Mesh(new THREE.BoxGeometry(2.0,.012,2.7),new THREE.MeshStandardMaterial({map:rep(carpetTex(176,164,148,.14),2,2.7),roughness:.98}));
   rug.position.set(7.15,.036,13.4); rug.receiveShadow=true; gDress0.add(rug);
@@ -1490,7 +1520,7 @@ const gDress1=new THREE.Group(); G1.add(gDress1); furnGroups.push(gDress1);
   for(let i=0;i<3;i++){ const sh=box(.38,.008,.1,VM.alu,0,.55+i*.25,.02,g); sh.rotation.x=-.3; for(let j=0;j<3;j++){ const b=box(.1,.2,.012,pmat([0x0e9f8e,0xe8772e,0x203d5c][j],.5),-.12+j*.12,.56+i*.25,.05,g); b.rotation.x=-.3; } }
   shadowify(g); if(clearSpot(.9,5.2,0,.6)){ GX.add(g); EXTRA_CIR0.push([.9,5.2,.3]); } })();
 
-/* research wing: three demo stations (indicative – the plan shows the wing empty) */
+/* research room: seven demo stations – four in the main hall, three in the north-east wing (indicative layout) */
 (function(){ const g=new THREE.Group(); gDress0.add(g);
   const station=(x,z,rot,title)=>{ const t=new THREE.Group(); t.position.set(x,.03,z); t.rotation.y=rot; g.add(t);
     box(1.8,.9,.8,MATS.white,0,0,0,t); box(1.84,.04,.84,MATS.quartz,0,.9,0,t);
@@ -1499,9 +1529,11 @@ const gDress1=new THREE.Group(); G1.add(gDress1); furnGroups.push(gDress1);
     const prod=rbox(.42,.16,.3,.04,VM.satin); prod.position.set(-.45,1.02,.1); t.add(prod); const prod2=new THREE.Mesh(new THREE.CylinderGeometry(.12,.12,.22,24),VM.alu); prod2.position.set(.45,1.03,.1); t.add(prod2);
     EXTRA_COL0.push({x0:x-1.0,z0:z-.5,x1:x+1.0,z1:z+.5}); };
   station(22.0,4.5,0,'Electrification'); station(22.0,8.3,Math.PI,'ADAS sensors'); station(25.2,5.6,-Math.PI/2,'Software-defined vehicle');
+  station(15.0,18.26,Math.PI,'Battery systems'); station(18.0,18.26,Math.PI,'Power electronics'); station(21.0,18.26,Math.PI,'E-axle & motors');
+  station(16.2,12.5,0,'Hydrogen & fuel cell');
   shadowify(g);
-  reg({id:'F6',name:'Research wing demo stations',cat:'furn',level:0,obj:g,key:false,tags:['OEM'],ay:2.3,dims:'3 × demo counter 1.8 × 0.8 m with screens',height:'0.9 m counter',area:'',
-    desc:'Indicative fit-out for the new north-east research wing: the updated plan shows the wing as an empty room, so these stations are placeholders to show its scale.'}); })();
+  reg({id:'F6',name:'Research stations ×7',cat:'furn',level:0,obj:g,key:true,tags:['OEM'],ay:2.4,ax:19.5,az:12.5,dims:'7 × demo counter 1.8 × 0.8 m with screens',height:'0.9 m counter',area:'',
+    desc:'Seven demo stations: Battery systems, Power electronics and E-axle & motors along the south wall, Hydrogen & fuel cell on the north wall of the main hall, and Electrification, ADAS sensors and Software-defined vehicle in the north-east wing. The LED wall presentation area sits at the east end. Indicative layout, not on the plans.'}); })();
 
 /* LED pixel floor tiles around the concept vehicles (blue at the car, purple at the truck), as in the reference photos */
 const gPixels=new THREE.Group(); GX.add(gPixels);
@@ -1717,7 +1749,7 @@ const thin=(x0,z0,x1,z1)=>({x0:Math.min(x0,x1)-.07,z0:Math.min(z0,z1)-.07,x1:Mat
 const axisCircles=(v,len,wid)=>{ const r=wid/2+.1, n=Math.ceil(len/wid)+1, a=THREE.MathUtils.degToRad(v.head), out=[]; for(let i=0;i<n;i++){ const o=-len/2+r+(len-2*r)*i/(n-1); out.push([v.x+Math.cos(a)*o,v.z+Math.sin(a)*o,r]); } return out; };
 const COL0=[...WALLS_G.map(wr),...RECEPTION,{x0:1.8,z0:6.45,x1:4.25,z1:13.6},thin(STAIRS[0].x0,STAIRS[0].z1,STAIRS[0].x1,STAIRS[0].z1),...EXTRA_COL0];
 const CIR0=[...axisCircles(VEH.car,4.9,1.85),...axisCircles(VEH.bike,2.1,.8),...EXTRA_CIR0];
-const COL1=[...WALLS_M.map(wr),...RAIL_LIST.map(r=>thin(...r)),...PANTRY,thin(STAIRS[0].x0,9.2,STAIRS[0].x1,9.2),{x0:24.93,z0:9.0,x1:25.17,z1:S2.z0}];
+const COL1=[...WALLS_M.map(wr),...RAIL_LIST.map(r=>thin(...r)),...PANTRY,...BACKBAR,thin(STAIRS[0].x0,9.2,STAIRS[0].x1,9.2)];
 const CIR1=[...TABLES.map(t=>[t[0],t[1],.8]),...EXTRA_CIR1];
 const inRect=(r,x,z)=>x>=r.x0&&x<=r.x1&&z>=r.z0&&z<=r.z1;
 const inPoly=(p,x,z)=>{ let c=false; for(let i=0,j=p.length-1;i<p.length;j=i++){ if((p[i][1]>z)!==(p[j][1]>z)&&x<(p[j][0]-p[i][0])*(z-p[i][1])/(p[j][1]-p[i][1])+p[i][0])c=!c; } return c; };
@@ -1729,7 +1761,7 @@ function pushOut(x,z,rects,circs,R=.3){
     for(const c of circs){ const dx=x-c[0], dz=z-c[1], d=Math.hypot(dx,dz), m=c[2]+R; if(d<m&&d>1e-5){ x=c[0]+dx/d*m; z=c[1]+dz/d*m; } }
   } return [x,z];
 }
-function validPos(x,z,lv){ if(lv===0)return x>-9&&x<36&&z>-7&&z<27; return inPoly(SLAB_MEZZ,x,z)||!!stairAt(x,z); }
+function validPos(x,z,lv){ if(lv===0)return x>-9&&x<36&&z>-7&&z<27; return (inPoly(SLAB_MEZZ,x,z)&&!inPoly(MEZZ_HOLE,x,z))||!!stairAt(x,z); }
 function walkSet(route){
   W.route=route; W.u=0; W.playing=true; setPlayBtn(); W.ly=W.lp=0; $$('#walkSel button').forEach(b=>b.classList.toggle('on',b.dataset.w===route));
   if(route==='free'){ Object.assign(W,{fx:2,fz:3.4,level:0,yaw:Math.PI/2,pitch:0,fy:EYE}); } else { const S0=ROUTE_S[route]; W.yaw=Math.atan2(S0[8].x-S0[0].x,S0[8].z-S0[0].z); W.pitch=0; }
