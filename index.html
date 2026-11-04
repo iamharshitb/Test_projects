@@ -404,7 +404,7 @@ const WALLS_M=[rect(903,1167,1683,1180),rect(1670,627,1683,1180)];
 
 const DOORS=[
   {id:'D1',name:'Lounge entrance door',cx:mx(573.5),cz:mz(633.5),w:.88,ori:'h',hinge:-1,into:1},
-  {id:'D2',name:'Media room door (from lounge)',cx:13.01,cz:11.435,w:.86,ori:'v',hinge:1,into:1},
+  {id:'D2',name:'Media room door (from lounge)',cx:13.01,cz:11.435,w:.86,ori:'v',hinge:1,into:-1},
   {id:'D3',name:'Store room door (from the service alley)',cx:25.07,cz:12.85,w:.9,ori:'h',hinge:-1,into:-1},
   {id:'D7',name:'Staff / service exit door (foot of Stair 2)',cx:26.88,cz:18.275,w:.85,ori:'v',hinge:1,into:1},
   {id:'D4',name:'Meeting room 1 door',cx:mx(653.5),cz:mz(965),w:.8,ori:'h',hinge:-1,into:1},
@@ -441,12 +441,17 @@ const ZONES=[
   {id:'Z2',x:mx(1107),z:mz(362),hd:237*K,col:0x7a5c8e,clipX:19.0},
 ];
 const RECEPTION=[ {x0:mx(632),z0:mz(522),x1:mx(780),z1:mz(547)}, {x0:mx(755),z0:mz(522),x1:mx(780),z1:mz(598)} ];
-/* Mezzanine (plan "Mezzanine_Floor2", Nov 2026): small L-shaped coffee counter enclosing a pantry in the back-right corner,
-   and Stair 2 inside a walled enclosure that only the pantry staff can enter (a staff corridor runs beside the stair). */
-const PANTRY=[ R(22.77,17.04,24.9,17.44), R(22.77,17.44,23.2,18.76) ];          // L-counter: north arm + west arm (customer side)
-const BACKBAR=[ R(24.9,12.1,25.0,17.04), R(24.9,12.1,26.77,12.2) ];          // railing-height (1.05 m) enclosure walls around the staff stair (west + north)
-/* café tables as drawn: 2 rows × 4 columns */
-const TABLES=[12.24,15.09].flatMap(z=>[14.54,17.34,20.1,22.87].map(x=>[x,z]));
+/* Mezzanine (rev. 2, Nov 2026): nothing on the mezzanine is taller than the 1.05 m railing. A small L-shaped coffee counter
+   stands at the top of Stair 2 and screens it; the L is open on the east side, so anyone can reach the stair-top landing and
+   go down Stair 2 in an emergency. */
+const PANTRY=[ R(24.35,11.3,24.85,13.3), R(24.85,11.3,25.6,11.8) ];  // L counter: west arm 2.0 m (faces the café) + north arm (faces the NE area)
+const BACKBAR=[ R(24.85,13.2,25.67,13.3),                           // low return closing the barista zone to the south
+                R(25.67,12.9,25.77,17.74),                          // solid low wall along Stair 2 (west side)
+                R(24.85,16.6,24.95,18.76) ];                        // low divider beside the south-east private corner
+const LOW_H=1.05;
+const EGRESS=R(25.6,11.3,26.77,12.9);                                // open side of the L → stair-top landing
+/* café tables: row 1 columns 1-3, row 2 columns 1-4 (the counter queue takes the place of row 1, column 4) */
+const TABLES=[...[14.54,17.34,20.1].map(x=>[x,12.24]),...[14.54,17.34,20.1,22.87].map(x=>[x,15.09])];
 const sqm=r=>(r.x1-r.x0)*(r.z1-r.z0);
 /* ============================ Renderer / scene ============================ */
 const $=s=>document.querySelector(s), $$=s=>[...document.querySelectorAll(s)];
@@ -668,7 +673,7 @@ function rail(parent,x0,z0,x1,z1,y0=H1,h=1.05){
 }
 const gRails1=new THREE.Group(); G1.add(gRails1);
 const RAIL_LIST=[[X903,ZB+.07,XE-.1,ZB+.07],                                   // mezzanine north edge
- [S2.x0,S2.z1+.02,S2.x1,S2.z1+.02],[S2.x0-.02,S2.z0+.05,S2.x0-.02,S2.z1],  // Stair-2 opening: south rail + rail along the staff corridor
+ [S2.x0,S2.z1+.02,S2.x1,S2.z1+.02],                                      // Stair-2 opening: south rail (the back wall closes its west side)
  [X903-.02,mz(738),X903-.02,ZS-.05],                                       // divider mezzanine | lounge deck
  [XW+.05,ZB+.07,XW+.05,ZS-.05],[XW+.05,ZS-.07,X903,ZS-.07],[XW+.05,ZB+.07,mx(636),ZB+.07], // deck parapets
  [mx(636),ZB+.1,mx(636),mz(738)],[mx(636),mz(738),X903,mz(738)],           // stair-1 opening
@@ -714,8 +719,11 @@ const doorObjs={}; DOORS.forEach(d=>doorObjs[d.id]=buildDoor(d));
 function buildStair(s){
   const along=s.axis==='z', La=along?s.z1-s.z0:s.x1-s.x0, w=along?s.x1-s.x0:s.z1-s.z0, run=La/NSTEP, rise=H1/NSTEP;
   const g=new THREE.Group(), k=new THREE.Group(); g.add(k);           // k: local frame, climbs towards +x from 0 to La
-  for(let i=0;i<NSTEP;i++){ box(run,rise*(i+1),w,MATS.step,i*run+run/2,0,0,k); box(run*.12,.012,w,MATS.stepEdge,i*run+run*.06,rise*(i+1),0,k); }
+  const hollow=s.id==='S1', WAIST=.32;                                 // Stair 1 is open underneath (refreshment nook)
+  for(let i=0;i<NSTEP;i++){ const top=rise*(i+1), bot=hollow?Math.max(0,top-WAIST):0; box(run,top-bot,w,MATS.step,i*run+run/2,bot,0,k); box(run*.12,.012,w,MATS.stepEdge,i*run+run*.06,rise*(i+1),0,k); }
   const a=Math.atan2(H1,La), L=Math.hypot(H1,La);
+  if(hollow){ const x0=WAIST*La/H1, len=(La-x0)/Math.cos(a), xc=(x0+La)/2;
+    const sof=new THREE.Mesh(new THREE.BoxGeometry(len,.03,w),MATS.step); sof.position.set(xc,H1*xc/La-WAIST-.015,0); sof.rotation.z=a; sof.castShadow=sof.receiveShadow=true; k.add(sof); }
   [-w/2+.05,w/2-.05].forEach(z=>{ cyl(.027,L,MATS.metal,La/2,H1/2+.95,z,k,10,0,a-Math.PI/2);
     for(let i=0;i<=NSTEP;i+=2) cyl(.02,.95,MATS.metal,i*run,rise*i+.475,z,k,8); });
   const xc=(s.x0+s.x1)/2, zc=(s.z0+s.z1)/2;
@@ -734,7 +742,7 @@ function roomEl(id,name,k,desc,tags,extra={}){
   return reg({id,name,cat:'room',level:0,obj:extra.obj||FT[k],ay:1.3,key:true,tags,
     dims:`${w.toFixed(2)} × ${d.toFixed(2)} m`,height:'2.5 m (floor to slab)',area:fmtA(w*d),desc,...extra});
 }
-roomEl('G1','Lounge Area','lounge','Arrival and waiting lounge. Entered from the exhibition floor through the lounge door; two bench sofas on the west wall. Hub that connects the Research Room, both Meeting Rooms and Stair 1 (north-east corner).',['OEM','OEM·A','OEM·B']);
+roomEl('G1','Lounge Area','lounge','Arrival and waiting lounge. Entered from the exhibition floor through the lounge door; an open hall with a coffee, water and bag nook under Stair 1. Hub that connects the Research Room, both Meeting Rooms and Stair 1 (north-east corner).',['OEM','OEM·A','OEM·B']);
 roomEl('G2','Research Room','research','Largest room in the stall, now L-shaped: the main hall behind the lounge plus a walled wing in the north-east corner (where the SUV used to be). Entered only from the lounge through the 2.0 m double door; the wing has no door to the exhibition floor. The plan still labels it 990 sq ft, which matches the old rectangle.',['OEM'],
   {dims:'L-shaped · 11.8 × 6.8 m main hall + 7.5 × 8.8 m wing',area:fmtA(RES_AREA)+' (measured from the updated plan)',focus:{dist:22},obj:FT.research,ax:20.5,az:13.2});
 roomEl('G3','Media Room','media','Media room with a three-seat sofa on the north wall and a six-seat meeting table. Now entered from the lounge through a door next to the top of Stair 1.',['OEM']);
@@ -747,7 +755,7 @@ roomEl('G6','Meeting Room 2','mr2','Six-seat meeting room with a long table. Doo
 
 reg({id:'M1',name:'Mezzanine Floor',cat:'mezz',level:1,obj:slabMezz,ax:20.6,az:15.2,ay:H1+1.7,key:true,tags:['OEM','OEM·B'],
   dims:'14.1 × 10.0 m (approx.)',height:'2.5 m clear (+2.5 → +5.0 m)',area:'≈ 133 m² (excl. Stair 2 opening)',
-  desc:'Seating / hospitality level above the Research, Media and Store rooms. Eight four-seat tables and a pantry. Laid out per the updated mezzanine plan: eight café tables, a compact L-shaped coffee counter with a pantry in the back-right corner, and Stair 2 inside a walled staff enclosure. Added on request: two semi-private sofa corners and built-in edge benches. Visitors come up and go down by Stair 1.'});
+  desc:'Seating / hospitality level above the Research, Media and Store rooms. Laid out from the updated mezzanine plan, revised on request: seven four-seat café tables (the eighth gave way to the counter queue), a small L coffee counter at the top of Stair 2 that screens it while its open side gives an emergency route down Stair 2, nothing taller than the railing, two semi-private sofa corners (south-west and south-east) and built-in edge benches. Visitors come up and go down by Stair 1; Stair 2 is the second means of escape.'});
 reg({id:'M5',name:'Research Wing Roof Slab',cat:'mezz',level:1,obj:slabWing,ay:H1+.6,key:false,tags:[],
   dims:'8.0 × 6.0 m',height:'Slab at +2.5 m',area:'not shown on the plans',desc:'Closed roof over the new north-east research wing, modelled like the other single-storey roofs. The plans do not show it, so treat it as an assumption.'});
 reg({id:'M3',name:'Lounge Roof Slab',cat:'mezz',level:1,obj:slabLounge,ay:H1+.6,key:false,tags:[],
@@ -1109,12 +1117,8 @@ function table(w,d,h,topMat=MATS.tableTop){
 function tableRect(w,d,h){ const g=new THREE.Group(); const top=rbox(w,.05,d,.03,MATS.tableTop); top.position.y=h-.025; g.add(top);
   for(const sx of [-1,1]) box(.06,h-.05,d*.6,MATS.steel,sx*(w/2-.15),0,0,g); return shadowify(g); }
 
-/* Lounge – two bench sofas on the west wall (faces east) */
+/* Lounge – kept open (sofas and coffee table removed on request) */
 const gFurn0=new THREE.Group(); G0.add(gFurn0); furnGroups.push(gFurn0);
-const sofaL1=sofaBench(1.45,.55,MATS.fabric2), sofaL2=sofaBench(1.45,.55,MATS.fabric2);
-sofaL1.position.set(mx(547),.03,mz(827)); sofaL2.position.set(mx(547),.03,mz(915));
-const loungeSofas=new THREE.Group(); loungeSofas.add(sofaL1,sofaL2); gFurn0.add(loungeSofas);
-reg({id:'F1',name:'Lounge Sofas ×2',cat:'furn',level:0,obj:loungeSofas,key:false,tags:['OEM'],dims:'2 × bench sofa 1.45 × 0.55 m',height:'0.9 m',area:'',desc:'Two three-seat bench sofas along the lounge west wall.',ay:1.4});
 
 /* Media room – three-seat sofa on the north wall + six-seat meeting table (updated plan) */
 const mediaG=new THREE.Group(); mediaG.position.set(0,.03,0); gFurn0.add(mediaG);
@@ -1135,6 +1139,44 @@ const t2=tableRect(1.07,2.26,.75); t2.position.set(mx(797),0,mz(1062)); mr2G.add
 [1022,1060,1098].forEach(y=>{ const a=chair(MATS.fabric2,Math.PI/2); a.position.set(mx(745),0,mz(y)); mr2G.add(a); const b=chair(MATS.fabric2,-Math.PI/2); b.position.set(mx(849),0,mz(y)); mr2G.add(b); });
 reg({id:'F4',name:'Meeting Room 2 Furniture',cat:'furn',level:0,obj:mr2G,key:false,tags:['OEM·A'],dims:'table 1.07 × 2.26 m + 6 chairs',height:'0.75 m table',area:'',desc:'Six-seat boardroom table.',ay:1.4});
 
+/* ============================ Refreshment & bag nook under Stair 1 (lounge) ============================
+   Stair 1 is open underneath. The tall end holds a small coffee machine and a water station; the low end and a tall rack hold
+   bags. A full-height slatted oak screen wraps the nook on the lounge side so the bags read as a timber wall from the sofas. */
+const gNook=new THREE.Group(); gNook.position.y=.03; gFurn0.add(gNook);
+const S1d=STAIRS[0], soff=x=>H1*(x-S1d.x0)/(S1d.x1-S1d.x0)-.35-.03;     // underside of the stair soffit (above the lounge floor)
+const NOAK=new THREE.MeshStandardMaterial({map:rep(OAK,1,1),color:0xe2cdb1,roughness:.55});
+function underPanel(x0,x1,z,thick,mat,base=0){ const sh=new THREE.Shape(); sh.moveTo(x0,base); sh.lineTo(x1,base); sh.lineTo(x1,Math.max(base,soff(x1))); sh.lineTo(x0,Math.max(base,soff(x0))); sh.closePath();
+  const m=new THREE.Mesh(new THREE.ExtrudeGeometry(sh,{depth:thick,bevelEnabled:false}),mat); m.position.z=z; m.castShadow=m.receiveShadow=true; gNook.add(m); return m; }
+underPanel(S1d.x0+.62,9.55,10.975,.03,MATS.wall);                       // closes the lowest part of the under-stair void
+underPanel(9.55,S1d.x1-.02,10.36,.03,NOAK);                             // oak back panel of the nook
+underPanel(12.02,S1d.x1-.02,10.4,.58,NOAK);                             // closed supplies cupboard at the tall end (keeps the media-door approach clear)
+box(.008,1.4,.5,MATS.dark,12.3,.3,10.69,gNook);                          // cupboard door shadow-gap
+/* low bag cubbies following the stair slope */
+const cub=(x0,x1)=>{ box(.025,soff(x0)-.01,.58,NOAK,x0,0,10.69,gNook); };
+[9.55,10.15,10.6,11.05].forEach(x=>cub(x)); box(1.5,.025,.58,NOAK,10.3,0,10.69,gNook); box(.9,.025,.58,NOAK,10.6,.5,10.69,gNook);
+/* coffee & water counter */
+box(.9,.86,.58,NOAK,11.55,0,10.69,gNook); box(.94,.04,.6,MATS.quartz,11.55,.86,10.69,gNook); box(.005,.7,.5,MATS.dark,11.55,.08,10.98,gNook).rotation.y=Math.PI/2;
+box(.3,.34,.36,MATS.dark,11.8,.9,10.6,gNook); box(.24,.02,.12,MATS.steel,11.8,.93,10.84,gNook); cyl(.035,.07,MATS.white,11.8,.985,10.83,gNook,14);
+box(.2,.3,.28,MATS.steel,11.33,.9,10.58,gNook); box(.16,.08,.03,MATS.dark,11.33,1.08,10.73,gNook); box(.18,.02,.1,MATS.dark,11.33,.93,10.82,gNook);
+for(let i=0;i<4;i++) cyl(.032,.1,MATS.glass,11.44+i*.08,.95,10.86,gNook,14);
+for(let i=0;i<3;i++) cyl(.04,.11,MATS.white,11.53+(i%3)*.09,.95+0*i,10.55,gNook,14);
+const strip=new THREE.Mesh(new THREE.BoxGeometry(2.4,.01,.04),MATS.lightW); const sa=Math.atan2(H1,S1d.x1-S1d.x0);
+strip.rotation.z=sa; strip.position.set(11.3,soff(11.3)-.01,10.5); gNook.add(strip);
+const BAGC=[0x2b2e33,0x5a4a3a,0x23395b,0x6b6f76,0x3b4a3a];
+function bagProp(x,y,z,w,h,d,c){ const b=rbox(w,h,d,.04,new THREE.MeshStandardMaterial({color:c,roughness:.8})); b.position.set(x,y+h/2,z); gNook.add(b); }
+bagProp(10.35,.025,10.7,.36,.3,.4,BAGC[3]); bagProp(10.85,.525,10.7,.32,.3,.38,BAGC[4]); bagProp(9.85,.025,10.72,.3,.22,.36,BAGC[1]);
+/* full-height slatted oak screen on the lounge side (south + west), open at the tall end */
+function slatsGF(x0,z0,x1,z1,h){ const L=Math.hypot(x1-x0,z1-z0), n=Math.round(L/.1), ux=(x1-x0)/L, uz=(z1-z0)/L, rot=-Math.atan2(uz,ux);
+  for(let i=0;i<=n;i++){ const t=i/n*L; box(.045,h,.09,NOAK,x0+ux*t,0,z0+uz*t,gNook).rotation.y=rot; }
+  for(const y of [0,h-.05]) box(L+.05,.05,.1,NOAK,(x0+x1)/2,y,(z0+z1)/2,gNook).rotation.y=rot; }
+const NOOK_H=H1-SLAB-.035;
+slatsGF(9.5,11.88,11.05,11.88,NOOK_H); slatsGF(9.5,11.02,9.5,11.84,NOOK_H);
+shadowify(gNook);
+EXTRA_COL0.push({x0:9.42,z0:11.0,x1:9.58,z1:11.94},{x0:9.42,z0:11.8,x1:11.12,z1:11.94});
+reg({id:'F5',name:'Coffee, water & bag nook',cat:'furn',level:0,obj:gNook,key:false,tags:['OEM'],ay:2.0,ax:10.9,az:11.4,
+  dims:'≈ 3.4 × 1.5 m under Stair 1 + 0.9 m strip of the lounge',height:'0.9 m counter · 2.33 m slatted screen',area:'≈ 6–8 bag spaces',
+  desc:'Built under Stair 1, which is now open underneath. The tall end has a 0.9 m counter with a small coffee machine and a water station (with headroom over the machines) and a closed supplies cupboard beside the media-room door. Open bag cubbies follow the stair slope at the low end. A full-height slatted oak screen wraps the nook, so from the sofas and the entrance it reads as a timber wall; the opening faces the media-room door, away from the seating.'});
+
 /* ============================ Mezzanine fit-out ============================ */
 const gFurn1=new THREE.Group(); G1.add(gFurn1); furnGroups.push(gFurn1);
 TABLES.forEach(([x,z],i)=>{
@@ -1148,22 +1190,41 @@ TABLES.forEach(([x,z],i)=>{
 
 const gPantry=new THREE.Group(); gPantry.position.y=H1; gFurn1.add(gPantry);
 const fm=(c,r=.5)=>new THREE.MeshStandardMaterial({color:c,roughness:r});
-/* compact L coffee counter (oak front, quartz top) */
+function signTex(lines,bg,fg,w=512,h=256){ const c=document.createElement('canvas'); c.width=w; c.height=h; const g=c.getContext('2d');
+  g.fillStyle=bg; g.fillRect(0,0,w,h); g.fillStyle=fg; g.textAlign='center'; g.textBaseline='middle';
+  lines.forEach(([t,sz,y,wt])=>{ g.font=`${wt||600} ${sz}px Inter,Helvetica,Arial,sans-serif`; g.fillText(t,w/2,y); });
+  const t=new THREE.CanvasTexture(c); t.colorSpace=THREE.SRGBColorSpace; t.anisotropy=8; return t; }
+/* small L coffee counter at the top of Stair 2 (oak front, quartz top, 1.05 m = railing height) */
 PANTRY.forEach(r=>{ const w=r.x1-r.x0,d=r.z1-r.z0,cx=(r.x0+r.x1)/2,cz=(r.z0+r.z1)/2;
-  box(w,1.0,d,MATS.timber,cx,0,cz,gPantry); box(w+.04,.04,d+.04,MATS.quartz,cx,1.0,cz,gPantry); box(w+.02,.08,d+.02,MATS.dark,cx,0,cz,gPantry); });
-const caseG=new THREE.Mesh(new THREE.BoxGeometry(.9,.3,.34),MATS.glass); caseG.position.set(23.5,1.19,17.24); gPantry.add(caseG);
-for(let i=0;i<5;i++) cyl(.055,.05,fm([0xc9935a,0xe6d2b5,0x7a4a2a][i%3],.6),23.15+i*.17,1.07,17.24,gPantry,14);
-for(let i=0;i<4;i++) cyl(.04,.1,fm(0xf4f4f2,.3),24.3+i*.12,1.07,17.24,gPantry,12);
-/* pantry back counter with coffee machine, grinder and fridge */
-box(2.3,.9,.6,MATS.white,24.6,0,18.46,gPantry); box(2.34,.04,.64,MATS.quartz,24.6,.9,18.46,gPantry);
-box(.55,.45,.42,MATS.steel,24.0,.94,18.42,gPantry); box(.32,.12,.25,MATS.dark,24.0,1.28,18.42,gPantry); cyl(.08,.3,MATS.dark,24.55,1.09,18.42,gPantry,16);
-box(.65,1.8,.62,MATS.steel,26.35,0,18.42,gPantry);
-/* railing-height enclosure walls around the staff stair + staff corridor */
-BACKBAR.forEach(r=>{ const m=box(r.x1-r.x0,1.05,r.z1-r.z0,MATS.wall,(r.x0+r.x1)/2,0,(r.z0+r.z1)/2,gPantry); });   /* railing-height enclosure */
+  box(w,1.01,d,MATS.timber,cx,0,cz,gPantry); box(w+.04,.04,d+.04,MATS.quartz,cx,1.01,cz,gPantry); box(w+.02,.08,d+.02,MATS.dark,cx,0,cz,gPantry); });
+/* compact espresso machine + grinder on the west arm (facing the barista), pastry tray, till */
+box(.42,.38,.5,MATS.steel,24.62,1.05,11.85,gPantry); box(.44,.03,.52,MATS.dark,24.62,1.43,11.85,gPantry);
+for(const dz of [-.12,.12]) cyl(.03,.05,MATS.dark,24.86,1.2,11.85+dz,gPantry,12);
+cyl(.07,.26,MATS.dark,24.62,1.18,12.35,gPantry,16);
+box(.32,.015,.6,MATS.dark,24.55,1.05,12.85,gPantry);
+for(let i=0;i<4;i++) cyl(.05,.045,fm([0xc9935a,0xe6d2b5,0x7a4a2a][i%3],.6),24.55,1.08,12.62+i*.15,gPantry,14);
+for(let i=0;i<3;i++) cyl(.04,.1,fm(0xf4f4f2,.3),25.1+i*.12,1.1,11.55,gPantry,12);
+box(.2,.02,.28,MATS.dark,25.4,1.05,11.55,gPantry).rotation.x=-.5;
+/* low walls (1.05 m, oak) – return behind the barista, wall along Stair 2, divider by the private corner */
+BACKBAR.forEach(r=>{ box(r.x1-r.x0,LOW_H-.04,r.z1-r.z0,MATS.timber,(r.x0+r.x1)/2,0,(r.z0+r.z1)/2,gPantry);
+  box(r.x1-r.x0+.03,.04,r.z1-r.z0+.03,MATS.quartz,(r.x0+r.x1)/2,LOW_H-.04,(r.z0+r.z1)/2,gPantry); });
+box(.26,.04,4.3,MATS.timber,25.54,LOW_H-.04,15.55,gPantry);                          // standing ledge on the café side of the stair wall
+/* emergency route: exit sign on the north arm (below railing height) + green floor marking into the open side of the L */
+const exitMat=new THREE.MeshStandardMaterial({map:signTex([['←  EXIT',110,128,800]],'#16a05a','#ffffff',512,256),emissive:0x0d7a40,emissiveIntensity:.6,roughness:.4});
+const exS=new THREE.Mesh(new THREE.PlaneGeometry(.5,.25),exitMat); exS.rotation.y=Math.PI; exS.position.set(25.3,.75,11.285); gPantry.add(exS);
+const arrowTex=signTex([['▼',230,128,800]],'#16a05a','#ffffff',256,256);
+const lane=new THREE.Mesh(new THREE.PlaneGeometry(1.0,1.5),new THREE.MeshStandardMaterial({color:0x16a05a,transparent:true,opacity:.18,roughness:.8,depthWrite:false}));
+lane.rotation.x=-Math.PI/2; lane.position.set(26.2,.006,12.1); lane.userData.noAO=true; gPantry.add(lane);
+for(const z of [10.6,11.9]){ const ar=new THREE.Mesh(new THREE.PlaneGeometry(.42,.42),new THREE.MeshStandardMaterial({map:arrowTex,roughness:.7}));
+  ar.rotation.set(-Math.PI/2,0,Math.PI); ar.position.set(26.2,.008,z); gPantry.add(ar); }
+/* back counter south of Stair 2 (0.9 m, under-counter fridge + sink) */
+box(1.75,.9,.46,MATS.white,25.87,0,18.53,gPantry); box(1.79,.04,.5,MATS.quartz,25.87,.9,18.53,gPantry); box(.4,.02,.3,MATS.steel,25.4,.93,18.53,gPantry);
+box(.58,.75,.01,MATS.steel,26.35,.08,18.295,gPantry);
+EXTRA_COL1.push(R(24.95,18.28,26.77,18.76));
 shadowify(gPantry);
-reg({id:'M2',name:'Coffee counter & pantry',cat:'mezz',level:1,obj:gPantry,key:true,tags:['OEM·B'],ay:H1+2.8,ax:23.6,az:17.6,
-  dims:'L-counter 2.1 m + 1.7 m, 0.4 m deep',height:'1.04 m counter',area:'pantry ≈ 4.6 m²',
-  desc:'Compact L-shaped coffee counter in the back-right corner, as on the updated mezzanine plan. Staff work in the pantry behind it, which also connects through a walled corridor to Stair 2, the staff-only service stair. Visitors cannot see or reach the stair.'});
+reg({id:'M2',name:'Coffee counter & Stair-2 exit',cat:'mezz',level:1,obj:gPantry,key:true,tags:['OEM·B'],ay:H1+1.9,ax:24.9,az:12.0,
+  dims:'L-counter 2.0 + 1.25 m, 0.5 m deep · emergency gap 1.17 m',height:'1.05 m (railing height) – nothing taller on the mezzanine',area:'barista zone ≈ 1.0 m²',
+  desc:'Small L-shaped coffee counter at the top of Stair 2. The long arm faces the café, the short arm faces the open area by the north bench. The barista stands on the stair-top landing inside the L. The east side of the L is left open (1.17 m), so in an emergency anyone can walk past the counter onto the landing and down Stair 2 to the service exit. A solid 1.05 m oak wall with a standing ledge runs along the stair; because the stair drops below the floor, the counter and this low wall keep it out of sight from the seating. A 0.9 m back counter with fridge and sink sits south of the stair.'});
 
 /* ---- semi-private sofa corners (front-left and back-right on the plan) ---- */
 const gLounge=new THREE.Group(); gLounge.position.y=H1; gFurn1.add(gLounge);
@@ -1180,12 +1241,12 @@ function loungeCorner(cfg){ const g=new THREE.Group(); gLounge.add(g);
   cfg.cols.forEach(r=>EXTRA_COL1.push(r)); return g; }
 const loungeSW=loungeCorner({ sofas:[[1.6,13.27,17.55,0],[2.0,14.57,18.46,Math.PI/2]], table:[14.55,17.45,1.4,.8], rug:[14.4,17.55,2.5,1.9],
   screens:[[13.0,16.25,14.6,16.25,1.0],[15.75,17.25,15.75,18.74,1.0]], cols:[{x0:12.95,z0:16.75,x1:13.6,z1:18.76},{x0:13.55,z0:18.15,x1:15.6,z1:18.76},{x0:13.85,z0:17.05,x1:15.25,z1:17.85}] });
-const loungeNE=loungeCorner({ sofas:[[2.0,25.55,9.5,-Math.PI/2],[1.6,26.46,10.85,Math.PI]], table:[25.25,10.75,1.4,.8], rug:[25.4,10.8,2.4,2.1],
-  screens:[[24.15,9.3,24.15,11.0,1.0]], cols:[{x0:24.5,z0:9.2,x1:26.6,z1:9.8},{x0:26.15,z0:10.0,x1:26.77,z1:11.7},{x0:24.55,z0:10.35,x1:25.95,z1:11.15}] });
+const loungeSE=loungeCorner({ sofas:[[1.6,24.53,17.85,Math.PI],[1.45,23.47,18.44,Math.PI/2]], table:[23.45,17.45,1.0,.6], rug:[23.75,17.75,2.0,1.9],
+  screens:[[22.7,16.65,24.33,16.65,1.0]], cols:[{x0:24.2,z0:17.0,x1:24.85,z1:18.7},{x0:22.7,z0:18.1,x1:24.25,z1:18.76},{x0:22.92,z0:17.12,x1:23.98,z1:17.78}] });
 reg({id:'M6',name:'Private corner – front left',cat:'mezz',level:1,obj:loungeSW,key:false,tags:['OEM·B'],ay:H1+2.0,
   dims:'≈ 2.8 × 2.5 m · L-sofa + 1.4 × 0.8 m table',height:'1.04 m slatted screens (coffee-counter height)',area:'',desc:'Semi-private sofa corner at the front-left of the mezzanine plan (south-west corner): L-shaped sofa, a larger table and slatted timber screens. Added on request.'});
-reg({id:'M7',name:'Private corner – back right',cat:'mezz',level:1,obj:loungeNE,key:false,tags:['OEM·B'],ay:H1+2.0,
-  dims:'≈ 2.6 × 3.2 m · L-sofa + 1.4 × 0.8 m table',height:'1.04 m slatted screen (coffee-counter height)',area:'',desc:'Semi-private sofa corner at the back-right of the mezzanine plan (north-east corner, above the store room): L-shaped sofa against the rail and the east wall, a larger table and a slatted screen. Added on request.'});
+reg({id:'M7',name:'Private corner – front right',cat:'mezz',level:1,obj:loungeSE,key:false,tags:['OEM·B'],ay:H1+2.0,ax:23.8,az:17.7,
+  dims:'≈ 2.2 × 2.1 m · L-sofa + 1.0 × 0.6 m table',height:'1.04 m slatted screen · 1.05 m oak divider',area:'',desc:'Semi-private sofa corner in the old coffee-counter spot (south-east corner): L-shaped sofa against the pantry wall and the back wall, a low table and a slatted screen. Moved here from the north-east so the open side of the coffee counter and the route to Stair 2 stay clear.'});
 
 /* ---- built-in edge benches with small side tables ---- */
 const gBench=new THREE.Group(); gBench.position.y=H1; gFurn1.add(gBench);
@@ -1195,17 +1256,17 @@ function edgeBench(x0,x1,zEdge,dir){ /* dir +1: bench faces +z (back to the nort
   const back=rbox(L-.04,.42,.1,.04,MATS.fabric3); back.position.set(cx,.7,zEdge+dir*.06); back.rotation.x=dir*.12; gBench.add(back);
   for(let x=x0+1.1;x<x1-.6;x+=2.2){ const t=new THREE.Group(); t.position.set(x,0,zEdge+dir*.82); cyl(.24,.03,MATS.tableTop,0,.45,0,t,24); cyl(.03,.44,MATS.steel,0,.22,0,t,8); cyl(.16,.02,MATS.steel,0,.01,0,t,20); gBench.add(t); EXTRA_CIR1.push([x,zEdge+dir*.82,.25]); }
   EXTRA_COL1.push({x0:x0,z0:Math.min(zEdge,zEdge+dir*.52),x1:x1,z1:Math.max(zEdge,zEdge+dir*.52)}); }
-edgeBench(14.3,23.6,ZB+.1,1);     // along the open north edge, overlooking the exhibition floor
+edgeBench(14.3,26.72,ZB+.1,1);     // along the open north edge, overlooking the exhibition floor
 edgeBench(15.95,22.55,ZS-.25,-1);  // along the back (south) wall
 shadowify(gLounge); shadowify(gBench);
 reg({id:'M8',name:'Edge benches',cat:'mezz',level:1,obj:gBench,key:false,tags:['OEM·B'],ay:H1+1.4,ax:19.0,az:9.6,
-  dims:'9.3 m along the north edge + 6.6 m along the back wall, 0.5 m deep',height:'0.46 m seat',area:'',
+  dims:'12.4 m along the north edge (to the east wall) + 6.6 m along the back wall, 0.5 m deep',height:'0.46 m seat',area:'',
   desc:'Built-in upholstered benches along the edges of the mezzanine with small round side tables. The north bench looks out over the exhibition floor. Added on request.'});
 
 [gFurn0,gFurn1].forEach(g=>edgeify(g,EDGE_SOFT,35));
 /* furniture footprints for walk-mode collisions */
 EXTRA_COL0.push({x0:6.79,z0:16.63,x1:8.35,z1:17.67},{x0:10.45,z0:15.73,x1:11.52,z1:17.99},{x0:16.85,z0:9.43,x1:17.9,z1:11.63},{x0:13.25,z0:9.23,x1:14.75,z1:9.8},
-  {x0:6.2,z0:11.87,x1:6.78,z1:13.32},{x0:6.2,z0:13.47,x1:6.78,z1:14.92});
+  );
 /* ============================ People (true scale, articulated) ============================
    Built facing +x, up +y, right side = +z. Base figure is 1.77 m to the top of the hair and is
    scaled per person, so a 1.75 m visitor stands 0.3 m taller than the 1.45 m sedan roof. */
@@ -1334,9 +1395,9 @@ const SEG={
   oemMain:{css:'#e8772e',hex:0xe8772e,pts:PP([[-.4,3.0],[3.2,4.4],[5.0,1.7],[10.6,.9],[14.7,1.0],[17.2,1.25],[18.4,2.7],[18.45,5.6],[17.5,7.7],[15.3,7.7],[14.3,6.4],[14.3,3.0],[13.2,1.9],[10.6,1.9],[7.6,2.7],[6.5,4.8],[6.7,7.0],[6.95,8.2],[6.95,9.1],[6.95,10.5],[8.0,12.3],[11.4,13.4],[13.0,13.4],[15.2,13.5],[18.0,15.0]])},
   oemA:{css:'#f0a040',hex:0xf0a040,pts:PP([[18.0,15.0],[15.4,14.2],[13.0,13.9],[10.8,14.0],[8.6,14.3],[8.4,15.0],[8.45,15.8],[8.36,15.55],[8.42,14.8],[8.75,14.3],[9.55,14.4],[9.58,15.05],[9.62,15.42],[9.92,15.6]])},
   /* OEM B: research → Stair 1 up → café tables → serving counter → back down Stair 1 → lounge → leave by the lounge door → exit west.
-     Stair 2 is a staff-only service stair hidden behind the serving counter. */
+     Stair 2 is hidden behind the coffee counter: staff use it daily, everyone can use it as the emergency exit (through the open side of the L counter). */
   oemB:{css:'#c9541c',hex:0xc9541c,pts:[...PP([[18.0,15.0],[15.4,14.2],[13.0,13.9],[11.4,13.6],[9.2,12.6],[7.5,11.6],[7.55,10.1]]),...ramp(STAIRS[0],false),
-        ...PP([[14.0,10.6,H1],[16.0,10.75,H1],[21.0,10.8,H1],[23.6,11.1,H1],[24.3,12.4,H1],[24.3,15.4,H1],[24.0,16.5,H1],[22.0,16.55,H1],[18.8,16.5,H1],[16.2,16.4,H1],[16.2,13.7,H1],[15.9,11.4,H1],[13.75,10.6,H1]]),
+        ...PP([[14.0,10.6,H1],[16.0,10.75,H1],[20.6,10.75,H1],[22.4,11.0,H1],[23.6,11.9,H1],[23.5,13.0,H1],[22.3,13.66,H1],[21.48,14.2,H1],[21.48,15.6,H1],[21.0,16.55,H1],[18.8,16.5,H1],[16.2,16.4,H1],[16.2,13.7,H1],[15.9,11.4,H1],[13.75,10.6,H1]]),
         ...ramp(STAIRS[0],true),...PP([[7.4,10.45],[6.95,9.7],[6.95,8.5],[6.55,7.0],[5.6,6.15],[4.4,5.9],[1.5,5.9],[-.5,5.9]])]},
 };
 const ROUTES={pub:['pub'],oemA:['oemMain','oemA'],oemB:['oemMain','oemB']};
@@ -1345,7 +1406,7 @@ const STOPS=[
   {seg:'pub',n:5,t:'Public exit',p:P(14.7,-.8)},
   {seg:'oemMain',n:1,t:'OEM entry',p:P(-.2,3.9)},{seg:'oemMain',n:2,t:'Reception',p:P(6.7,7.0)},{seg:'oemMain',n:3,t:'Lounge',p:P(6.95,10.5)},{seg:'oemMain',n:4,t:'Research Room',p:P(18.0,15.0)},
   {seg:'oemA',n:5,t:'Meeting Room 1',p:P(8.45,15.8)},{seg:'oemA',n:6,t:'Meeting Room 2',p:P(9.92,15.6)},
-  {seg:'oemB',n:5,t:'Mezzanine café',p:P(18.5,10.8,H1)},{seg:'oemB',n:6,t:'Coffee counter',p:P(24.0,16.5,H1)},{seg:'oemB',n:7,t:'OEM exit (west)',p:P(-.3,5.9)},
+  {seg:'oemB',n:5,t:'Mezzanine café',p:P(18.5,10.8,H1)},{seg:'oemB',n:6,t:'Coffee counter',p:P(23.6,11.95,H1)},{seg:'oemB',n:7,t:'OEM exit (west)',p:P(-.3,5.9)},
 ];
 STOPS.forEach(s=>{ s.css=SEG[s.seg].css; s.tag=s.seg==='pub'?'P':'O'; });
 
@@ -1440,8 +1501,7 @@ viewers(VEH.car,4.9,1.86,3,['point','folded','phone']);
 viewers(VEH.bike,2.1,.8,2,['stand','point']);
 viewers({x:VEH.truck.x,z:VEH.truck.z,head:VEH.truck.head},7.0,2.4,1,['phone']);
 /* lounge: two guests on the sofas */
-addPerson(gPeople0,6.56,.03,12.3,0,'lounge','exec',0,.3,false);
-addPerson(gPeople0,6.56,.03,14.55,0,'lounge','visitor',0,-.2,false);
+
 /* meeting room 1 and 2: seated around the tables */
 const seatAt=(x,z,face,kind)=>addPerson(gPeople0,x,.03,z,face,'seat',kind,0,0,false);
 seatAt(mx(587),mz(1131)+.03,-Math.PI/2,'exec'); seatAt(mx(626),mz(1131)+.03,-Math.PI/2,'visitor'); seatAt(mx(626),mz(1025)-.03,Math.PI/2,'exec');
@@ -1463,16 +1523,19 @@ addPerson(gPeople0,21.6,.03,5.55,-Math.PI/2,'stand','exec',0,0);
 addPerson(gPeople0,21.8,.03,7.05,Math.PI/2,'point','exec',0,0);
 addPerson(gPeople0,23.8,.03,5.9,0,'folded','visitor',0,.2);
 /* mezzanine: barista behind the coffee counter, second staff at the back counter */
-addPerson(gPeople1,23.9,H1,17.85,-Math.PI/2,'stand','staff',1,.2,false);
-addPerson(gPeople1,25.2,H1,17.95,Math.PI/2,'tablet','staff',1,-.2,false);
+addPerson(gPeople1,25.2,H1,12.45,Math.PI,'stand','staff',1,.2,false);
+addPerson(gPeople1,25.6,H1,18.0,Math.PI/2,'tablet','staff',1,-.2,false);
+addPerson(gPeople1,24.75,H1,10.95,Math.PI/2,'phone','exec',1,.1,false);          /* guest ordering at the counter */
+/* lounge: a guest at the coffee & water nook under Stair 1 */
+addPerson(gPeople0,11.6,.03,11.42,-Math.PI/2,'stand','exec',0,.15,false);
 /* private corners: guests on the sofas */
 addPerson(gPeople1,13.33,H1+.0,17.2,0,'lounge','exec',1,.3,false); addPerson(gPeople1,14.9,H1,18.4,-Math.PI/2,'lounge','visitor',1,-.2,false);
-addPerson(gPeople1,25.2,H1,9.55,Math.PI/2,'lounge','exec',1,0,false); addPerson(gPeople1,26.42,H1,11.0,Math.PI,'lounge','exec',1,.2,false);
+addPerson(gPeople1,24.55,H1,17.6,Math.PI,'lounge','exec',1,0,false); addPerson(gPeople1,23.1,H1,18.45,-Math.PI/2,'lounge','exec',1,.2,false);
 /* edge benches */
 addPerson(gPeople1,16.6,H1,9.42,Math.PI/2,'seat','visitor',1,.2,false); addPerson(gPeople1,20.4,H1,9.42,Math.PI/2,'seat','exec',1,-.3,false);
 addPerson(gPeople1,18.9,H1,18.42,-Math.PI/2,'seat','visitor',1,0,false);
 /* mezzanine: guests at the café tables */
-const SEATED=[2,1,3,0,1,2,0,2], CH=[[1,1],[-1,-1],[1,-1],[-1,1]];
+const SEATED=[2,1,3,1,2,0,2], CH=[[1,1],[-1,-1],[1,-1],[-1,1]];
 TABLES.forEach(([x,z],i)=>{ for(let k=0;k<SEATED[i];k++){ const [a,b]=CH[k]; addPerson(gPeople1,x+a*.6,H1,z+b*.6,Math.atan2(-b,-a),'seat',crand()<.5?'exec':'visitor',1,(crand()-.5)*.5,false); } });
 /* ============================ Stall dressing: rig, lights, branding, screens, plants ============================ */
 const gRig=new THREE.Group(); GX.add(gRig);
@@ -1568,14 +1631,7 @@ const gPlantsX=new THREE.Group(); GX.add(gPlantsX); furnGroups.push(gPlantsX);
 [[.5,.5],[.5,8.5],[26.5,.5],[11.3,8.55],[5.5,.6],[18.6,8.55],[19.5,.5]].forEach(([x,z])=>placePlant(gPlantsX,x,0,z,0,1.5));
 [[13.55,12.6],[13.55,18.35],[23.8,12.4],[23.8,18.35],[19.7,3.7],[26.35,3.7],[19.7,11.5]].forEach(([x,z])=>placePlant(gDress0,x,.03,z,0,1.3));
 const gDress1=new THREE.Group(); G1.add(gDress1); furnGroups.push(gDress1);
-[[15.95,16.35],[24.15,11.4],[13.35,13.4],[24.4,9.5]].forEach(([x,z])=>placePlant(gDress1,x,H1,z,1,1.3));
-/* lounge rug + coffee table */
-(function(){ const rug=new THREE.Mesh(new THREE.BoxGeometry(2.0,.012,2.7),new THREE.MeshStandardMaterial({map:rep(carpetTex(176,164,148,.14),2,2.7),roughness:.98}));
-  rug.position.set(7.15,.036,13.4); rug.receiveShadow=true; gDress0.add(rug);
-  const t=new THREE.Group(); const top=new THREE.Mesh(new THREE.CylinderGeometry(.42,.42,.04,36),MATS.tableTop); top.position.y=.42; t.add(top);
-  for(let i=0;i<3;i++){ const a=i*2.094, l=cyl(.015,.42,VM.trim,Math.cos(a)*.28,.21,Math.sin(a)*.28,t,8); }
-  const vase=new THREE.Mesh(new THREE.CylinderGeometry(.05,.07,.18,16),pmat(0xe9e4da,.3)); vase.position.y=.53; t.add(vase);
-  t.position.set(7.45,.03,13.4); shadowify(t); gDress0.add(t); EXTRA_CIR0.push([7.45,13.4,.45]); })();
+[[15.95,16.35],[13.35,13.4]].forEach(([x,z])=>placePlant(gDress1,x,H1,z,1,1.3));
 /* brochure stand at the public entry */
 (function(){ const g=new THREE.Group(); g.position.set(.9,0,5.2); g.rotation.y=-.5;
   box(.42,.02,.3,VM.trim,0,0,0,g); box(.04,1.25,.04,VM.alu,0,0,-.05,g);
@@ -1644,13 +1700,13 @@ TABLES.forEach(([x,z],i)=>{ for(let k=0;k<SEATED[i];k++){ const [a,b]=CH[k]; cup
 cup(gProps1,15.4,H1+.48,9.95); cup(gProps1,19.8,H1+.48,9.9); cup(gProps1,19.0,H1+.48,17.95);
 /* private corners */
 cup(gProps1,14.2,H1+.48,17.3); cup(gProps1,14.9,H1+.48,17.6); notebook(gProps1,14.5,H1+.486,17.4,.3,0x23395b);
-cup(gProps1,25.0,H1+.48,10.5); laptop(gProps1,25.5,H1+.48,10.9,Math.PI*.9);
+cup(gProps1,23.2,H1+.48,17.35); cup(gProps1,23.7,H1+.48,17.6); laptop(gProps1,23.5,H1+.48,17.4,Math.PI*.55);
 /* meeting rooms and media room: laptops facing the seated guests, water bottles, notebooks */
 const TT=.78;
 laptop(gProps0,7.19,TT,17.6,0); laptop(gProps0,7.9,TT,17.6,0); laptop(gProps0,7.9,TT,16.7,Math.PI); bottle(gProps0,7.5,TT,17.15); bottle(gProps0,7.7,TT,17.25); notebook(gProps0,7.2,TT+.006,16.75,.2,0x6c2e3a);
 laptop(gProps0,10.62,TT,16.82,-Math.PI/2); laptop(gProps0,11.36,TT,16.14,Math.PI/2); laptop(gProps0,11.36,TT,17.51,Math.PI/2); bottle(gProps0,11.0,TT,16.5); bottle(gProps0,11.0,TT,17.2); notebook(gProps0,10.75,TT+.006,17.6,-.2,0x2f5d73);
 laptop(gProps0,17.05,TT,9.82,-Math.PI/2); laptop(gProps0,17.7,TT,10.48,Math.PI/2); laptop(gProps0,17.7,TT,11.19,Math.PI/2); bottle(gProps0,17.38,TT,10.15); cup(gProps0,17.3,TT,10.9);
-cup(gProps0,7.35,.47,13.3); cup(gProps0,7.6,.47,13.55);
+
 shadowify(gProps0); shadowify(gProps1);
 
 /* --- skirting boards on every wall --- */
