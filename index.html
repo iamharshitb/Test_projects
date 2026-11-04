@@ -311,7 +311,7 @@ body[data-mode=walk] #left,body[data-mode=walk] #card{display:none}
     <label class="sw"><input type="checkbox" id="tGrid" checked>1 m grid</label>
     <label class="sw"><input type="checkbox" id="tShadow" checked>Shadows</label>
     <label class="sw"><input type="checkbox" id="tRig" checked>Lighting rig</label>
-    <label class="sw"><input type="checkbox" id="tHall" checked>Hall context</label>
+    <label class="sw"><input type="checkbox" id="tHall" checked>Hall aisle</label>
    </div>
   </details>
  </aside>
@@ -444,7 +444,7 @@ const RECEPTION=[ {x0:mx(632),z0:mz(522),x1:mx(780),z1:mz(547)}, {x0:mx(755),z0:
 /* Mezzanine (plan "Mezzanine_Floor2", Nov 2026): small L-shaped coffee counter enclosing a pantry in the back-right corner,
    and Stair 2 inside a walled enclosure that only the pantry staff can enter (a staff corridor runs beside the stair). */
 const PANTRY=[ R(22.77,17.04,24.9,17.44), R(22.77,17.44,23.2,18.76) ];          // L-counter: north arm + west arm (customer side)
-const BACKBAR=[ R(24.9,12.1,25.0,17.04), R(24.9,12.1,26.77,12.2) ];          // 2.4 m enclosure walls around the staff stair (west + north)
+const BACKBAR=[ R(24.9,12.1,25.0,17.04), R(24.9,12.1,26.77,12.2) ];          // railing-height (1.05 m) enclosure walls around the staff stair (west + north)
 /* café tables as drawn: 2 rows × 4 columns */
 const TABLES=[12.24,15.09].flatMap(z=>[14.54,17.34,20.1,22.87].map(x=>[x,z]));
 const sqm=r=>(r.x1-r.x0)*(r.z1-r.z0);
@@ -654,7 +654,8 @@ MATS.wall.bumpMap=rep(grainTex,8,8); MATS.wall.bumpScale=.15; MATS.wall.needsUpd
 const gWalls0=new THREE.Group(), gWalls1=new THREE.Group(), gFloors=new THREE.Group();
 G0.add(gWalls0,gFloors); G1.add(gWalls1); wallGroups.push(gWalls0,gWalls1);
 WALLS_G.forEach(r=>pxBox(r,0,H1-SLAB,MATS.wall,gWalls0));
-WALLS_M.forEach(r=>pxBox(r,H1,H2,MATS.wall,gWalls1));
+const RAIL_H=1.05; /* mezzanine perimeter walls are railing height */
+WALLS_M.forEach(r=>pxBox(r,H1,H1+RAIL_H,MATS.wall,gWalls1));
 
 /* rails / balustrades */
 function rail(parent,x0,z0,x1,z1,y0=H1,h=1.05){
@@ -1157,8 +1158,8 @@ for(let i=0;i<4;i++) cyl(.04,.1,fm(0xf4f4f2,.3),24.3+i*.12,1.07,17.24,gPantry,12
 box(2.3,.9,.6,MATS.white,24.6,0,18.46,gPantry); box(2.34,.04,.64,MATS.quartz,24.6,.9,18.46,gPantry);
 box(.55,.45,.42,MATS.steel,24.0,.94,18.42,gPantry); box(.32,.12,.25,MATS.dark,24.0,1.28,18.42,gPantry); cyl(.08,.3,MATS.dark,24.55,1.09,18.42,gPantry,16);
 box(.65,1.8,.62,MATS.steel,26.35,0,18.42,gPantry);
-/* 2.4 m enclosure walls around the staff stair + staff corridor */
-BACKBAR.forEach(r=>{ const m=box(r.x1-r.x0,2.4,r.z1-r.z0,MATS.wall,(r.x0+r.x1)/2,0,(r.z0+r.z1)/2,gPantry); });
+/* railing-height enclosure walls around the staff stair + staff corridor */
+BACKBAR.forEach(r=>{ const m=box(r.x1-r.x0,1.05,r.z1-r.z0,MATS.wall,(r.x0+r.x1)/2,0,(r.z0+r.z1)/2,gPantry); });   /* railing-height enclosure */
 shadowify(gPantry);
 reg({id:'M2',name:'Coffee counter & pantry',cat:'mezz',level:1,obj:gPantry,key:true,tags:['OEM·B'],ay:H1+2.8,ax:23.6,az:17.6,
   dims:'L-counter 2.1 m + 1.7 m, 0.4 m deep',height:'1.04 m counter',area:'pantry ≈ 4.6 m²',
@@ -1680,7 +1681,7 @@ WALLS_M.forEach(r=>box(r.x1-r.x0+.024,.09,r.z1-r.z0+.024,SKIRT,(r.x0+r.x1)/2,H1,
   p.rotation.y=Math.PI; p.position.set(13.6,2.13,8.935); p.userData.noAO=true; gWalls0.add(p);
   box(W+.06,H+.06,.05,VM.trim,13.6,2.13-H/2-.03,8.97,gWalls0); })();
 
-/* --- exhibition hall context: aisles, neighbouring stands, haze --- */
+/* --- exhibition hall context: aisle carpet around the stall and a soft haze --- */
 const gHall=new THREE.Group(); root.add(gHall);
 (function(){
   const aisle=new THREE.MeshStandardMaterial({map:rep(carpetTex(150,154,160,.1),20,20),roughness:.98,color:0xffffff});
@@ -1703,10 +1704,6 @@ const gHall=new THREE.Group(); root.add(gHall);
     sign.position.set(bx+nrm[0]*.1,h*.82,bz+nrm[1]*.1); sign.rotation.y=Math.atan2(nrm[0],nrm[1]); g.add(sign);
     for(let i=0;i<2;i++) box(.8,1.0,.8,platM,cx+(i-.5)*w*.35,-.04,cz+(i-.5)*d*.25,g);
     shadowify(g); }
-  stand(-2,-13,9,-5,'s',3.2,'Hall 3 · Stand C11',0); stand(11,-13,20,-5,'s',2.8,'Hall 3 · Stand C12',1); stand(22,-13,32,-5,'s',3.4,'Hall 3 · Stand C14',2);
-  stand(-15,-1,-5,9,'e',3.0,'Hall 3 · Stand B07',3); stand(-15,11,-5,21,'e',2.8,'Hall 3 · Stand B09',4);
-  stand(32,0,41,9,'w',3.0,'Hall 3 · Stand D02',5); stand(32,11,41,20,'w',3.2,'Hall 3 · Stand D04',0);
-  stand(0,24,12,32,'n',2.8,'Hall 3 · Stand E05',1); stand(14,24,27,32,'n',3.0,'Hall 3 · Stand E06',2);
 })();
 const HALL_FOG=new THREE.Fog(0xeceae6,60,140); scene.fog=HALL_FOG;
 /* ============================ App state ============================ */
