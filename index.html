@@ -268,6 +268,12 @@ body[data-mode=walk] #left,body[data-mode=walk] #card{display:none}
     <div class="sub" style="--c:var(--oemB)"><label class="sw nm" style="--c:var(--oemB)"><input type="checkbox" id="pOemB" checked><i></i>B · Mezzanine café → exit</label>
      <button class="walkb" data-walk="oemB"><svg class="i"><use href="#i-play"/></svg>Walk</button></div>
    </div>
+   <div class="route" id="tourBox" style="--c:var(--tc,#2f6fed)">
+    <div class="rh"><label class="sw nm" style="--c:var(--tc,#2f6fed)"><input type="checkbox" id="pTour"><em>R</em>Research room tours</label>
+     <button class="walkb" data-walk="tour" style="--c:var(--tc,#2f6fed)"><svg class="i"><use href="#i-play"/></svg>Walk</button></div>
+    <div class="seg full" id="tourSel" style="margin:8px 0 4px"><button data-v="r1" class="on">1</button><button data-v="r2">2</button><button data-v="r3">3</button><button data-v="r4">4</button><button data-v="r5">5</button></div>
+    <div class="small" id="tourName"></div>
+   </div>
    <div class="opts">
     <label class="sw"><input type="checkbox" id="tVis" checked>People</label>
     <label class="sw"><input type="checkbox" id="tStops" checked>Stops</label>
@@ -574,7 +580,7 @@ let gridLines;
 
 /* ============================ Element registry ============================ */
 const CAT={room:{c:'#4f6d8a',n:'Ground-floor rooms'},mezz:{c:'#7a5c8e',n:'Mezzanine'},veh:{c:'#b5534a',n:'Vehicles'},
-  zone:{c:'#6e8b5e',n:'Display zones'},furn:{c:'#8c7a66',n:'Furniture & fixtures'},circ:{c:'#5c6670',n:'Circulation'}};
+  zone:{c:'#6e8b5e',n:'Display zones'},furn:{c:'#8c7a66',n:'Furniture & fixtures'},circ:{c:'#5c6670',n:'Circulation'},exh:{c:'#1c1f24',n:'Research room exhibits'}};
 const ELS=[], byId={}, pickables=[];
 function reg(d){
   d.obj.updateWorldMatrix(true,true);
@@ -743,7 +749,7 @@ function roomEl(id,name,k,desc,tags,extra={}){
     dims:`${w.toFixed(2)} × ${d.toFixed(2)} m`,height:'2.5 m (floor to slab)',area:fmtA(w*d),desc,...extra});
 }
 roomEl('G1','Lounge Area','lounge','Arrival and waiting lounge. Entered from the exhibition floor through the lounge door; an open hall with a coffee, water and bag nook under Stair 1. Hub that connects the Research Room, both Meeting Rooms and Stair 1 (north-east corner).',['OEM','OEM·A','OEM·B']);
-roomEl('G2','Research Room','research','Largest room in the stall, now L-shaped: the main hall behind the lounge plus a walled wing in the north-east corner (where the SUV used to be). Entered only from the lounge through the 2.0 m double door; the wing has no door to the exhibition floor. The plan still labels it 990 sq ft, which matches the old rectangle.',['OEM'],
+roomEl('G2','Research Room','research','Largest room in the stall, now L-shaped: the main hall behind the lounge plus a walled wing in the north-east corner (where the SUV used to be). Entered only from the lounge through the 2.0 m double door; the wing has no door to the exhibition floor. The plan still labels it 990 sq ft, which matches the old rectangle. Exhibits are grouped into colour-coded theme zones (Bharat, ADAS, Electrification, Safety & Security, SDV & Cockpit) behind an entry storyline exhibit that faces the door.',['OEM'],
   {dims:'L-shaped · 11.8 × 6.8 m main hall + 7.5 × 8.8 m wing',area:fmtA(RES_AREA)+' (measured from the updated plan)',focus:{dist:22},obj:FT.research,ax:20.5,az:13.2});
 roomEl('G3','Media Room','media','Media room with a three-seat sofa on the north wall and a six-seat meeting table. Now entered from the lounge through a door next to the top of Stair 1.',['OEM']);
 roomEl('G4','Store Room','store','Back-of-house store at the front end of the east strip, beside the top of the staff stair. Reached only through the 1.2 m service alley that runs beside Stair 2 from the service landing. Staff only.',[]);
@@ -1392,23 +1398,44 @@ const SEG={
   /* Public: entry → truck → car → motorcycle loop → exit north (the SUV is no longer on the plan) */
   pub:{css:'#0e9f8e',hex:0x0e9f8e,pts:PP([[-.4,3.0],[3.2,4.4],[6.5,2.6],[10.6,1.0],[14.7,1.4],[17.2,1.5],[18.45,2.8],[18.5,5.4],[17.6,7.35],[15.5,7.45],[14.6,6.4],[14.7,3.2],[14.7,-.8]])},
   /* OEM main: same vehicle loop, then reception → lounge → research room */
-  oemMain:{css:'#e8772e',hex:0xe8772e,pts:PP([[-.4,3.0],[3.2,4.4],[5.0,1.7],[10.6,.9],[14.7,1.0],[17.2,1.25],[18.4,2.7],[18.45,5.6],[17.5,7.7],[15.3,7.7],[14.3,6.4],[14.3,3.0],[13.2,1.9],[10.6,1.9],[7.6,2.7],[6.5,4.8],[6.7,7.0],[6.95,8.2],[6.95,9.1],[6.95,10.5],[8.0,12.3],[11.4,13.4],[13.0,13.4],[15.2,13.5],[18.0,15.0]])},
-  oemA:{css:'#f0a040',hex:0xf0a040,pts:PP([[18.0,15.0],[15.4,14.2],[13.0,13.9],[10.8,14.0],[8.6,14.3],[8.4,15.0],[8.45,15.8],[8.36,15.55],[8.42,14.8],[8.75,14.3],[9.55,14.4],[9.58,15.05],[9.62,15.42],[9.92,15.6]])},
+  oemMain:{css:'#e8772e',hex:0xe8772e,pts:PP([[-.4,3.0],[3.2,4.4],[5.0,1.7],[10.6,.9],[14.7,1.0],[17.2,1.25],[18.4,2.7],[18.45,5.6],[17.5,7.7],[15.3,7.7],[14.3,6.4],[14.3,3.0],[13.2,1.9],[10.6,1.9],[7.6,2.7],[6.5,4.8],[6.7,7.0],[6.95,8.2],[6.95,9.1],[6.95,10.5],[8.0,12.3],[11.4,13.4],[13.0,13.45],[14.0,13.5],[14.85,13.9]])},
+  oemA:{css:'#f0a040',hex:0xf0a040,pts:PP([[14.85,13.9],[14.2,14.45],[13.0,14.05],[10.8,14.0],[8.6,14.3],[8.4,15.0],[8.45,15.8],[8.36,15.55],[8.42,14.8],[8.75,14.3],[9.55,14.4],[9.58,15.05],[9.62,15.42],[9.92,15.6]])},
   /* OEM B: research → Stair 1 up → café tables → serving counter → back down Stair 1 → lounge → leave by the lounge door → exit west.
      Stair 2 is hidden behind the coffee counter: staff use it daily, everyone can use it as the emergency exit (through the open side of the L counter). */
-  oemB:{css:'#c9541c',hex:0xc9541c,pts:[...PP([[18.0,15.0],[15.4,14.2],[13.0,13.9],[11.4,13.6],[9.2,12.6],[7.5,11.6],[7.55,10.1]]),...ramp(STAIRS[0],false),
+  oemB:{css:'#c9541c',hex:0xc9541c,pts:[...PP([[14.85,13.9],[14.2,14.45],[13.0,14.05],[11.4,13.6],[9.2,12.6],[7.5,11.6],[7.55,10.1]]),...ramp(STAIRS[0],false),
         ...PP([[14.0,10.6,H1],[16.0,10.75,H1],[20.6,10.75,H1],[22.4,11.0,H1],[23.6,11.9,H1],[23.5,13.0,H1],[22.3,13.66,H1],[21.48,14.2,H1],[21.48,15.6,H1],[21.0,16.55,H1],[18.8,16.5,H1],[16.2,16.4,H1],[16.2,13.7,H1],[15.9,11.4,H1],[13.75,10.6,H1]]),
         ...ramp(STAIRS[0],true),...PP([[7.4,10.45],[6.95,9.7],[6.95,8.5],[6.55,7.0],[5.6,6.15],[4.4,5.9],[1.5,5.9],[-.5,5.9]])]},
 };
-const ROUTES={pub:['pub'],oemA:['oemMain','oemA'],oemB:['oemMain','oemB']};
+/* Research-room tours by customer profile: start at the X0 storyline exhibit, visit the chosen themes, return to the door */
+const STOPS_T=[];
+const TN={DOOR:[12.2,13.45],DI:[13.4,13.45],P0:[14.95,14.0],L1:[15.1,12.45],L2:[16.5,12.44],N1:[17.25,12.92],N2:[18.7,13.3],N3:[20.6,13.3],JW:[21.6,12.7],W1:[21.9,10.4],
+  W2:[21.5,7.2],W7:[23.2,8.45],W8:[23.1,9.6],W9:[23.05,12.3],T1:[22.95,13.5],T2:[22.95,15.0],SA1:[22.95,16.4],SA2:[21.1,16.45],SA3:[19.0,16.45],SA4:[16.6,16.45],
+  R1:[14.8,15.6],R2:[13.85,14.25],DO:[13.3,13.6],EXIT:[12.2,13.5],SB:[22.75,17.2],SC:[21.85,16.65],W3:[23.15,6.9],A1s:[20.0,16.0]};
+const TV={A1:[20.0,13.75,'ADAS CV table'],A2:[17.9,13.0,'XC Ally.Move + sensors'],A3:[19.4,13.0,'ME semiconductors'],E1:[23.15,10.25,'Electrification'],
+  S1:[22.0,17.25,'SafeSphere'],S2:[23.3,17.6,'Cybersecurity'],S3:[23.2,17.2,'V2X'],S4:[23.5,15.0,'Advanced VMM'],S5:[22.95,12.7,'Suspension control'],
+  B2:[14.4,17.2,'B-SDV mini car'],B3:[17.25,17.6,'2WP'],B4:[18.35,17.35,'Samarth Bharat'],D1:[23.1,5.0,'AI cockpit simulator'],D2:[23.9,4.6,'HPC cockpit'],D3:[25.55,4.6,'Core compute'],
+  D4:[25.5,5.4,'AI calibration'],D5:[25.5,7.1,'SCORE · SOVD'],D6:[25.5,8.35,'AI Coder'],D7:[20.8,7.5,'S2S – API'],D8:[20.8,9.35,'Google SDV'],D9:[20.8,11.2,'SDV Light Framework']};
+const TOURS=[
+ ['r1','Passenger-car OEM · ADAS & Safety','#2f6fed',['DOOR','DI','P0','L1','L2','N1','N2','A1','N3','T1','T2','S4','SA1','S2','SB','S1','SA2','SA3','SA4','R1','R2','DO','EXIT']],
+ ['r2','SDV & E/E architecture','#7a5c8e',['DOOR','DI','P0','L1','L2','N1','N2','N3','JW','D9','D8','D7','W2','W3','D1','D4','D5','D6','W7','W8','W9','T1','T2','SA1','S2','SB','S1','SA2','SA3','SA4','R1','R2','DO','EXIT']],
+ ['r3','2W / 3W OEM · Bharat','#e8772e',['DOOR','DI','P0','R1','SA4','B2','B4','SA3','SA2','SA1','T2','T1','W9','W8','E1','W1','JW','N3','N2','N1','L2','L1','EXIT']],
+ ['r4','Commercial vehicle & off-highway','#3f8f5a',['DOOR','DI','P0','L1','L2','N1','N2','N3','JW','W1','E1','W9','T1','T2','S4','SA1','S1','SC','SA2','A1s','SA3','SA4','R1','R2','DO','EXIT']],
+ ['r5','Regulators, BNCAP & fleet safety','#c8463c',['DOOR','DI','P0','R1','SA4','SA3','B4','SA2','S1','SB','S2','SA1','T2','T1','N3','A1','N2','N1','L2','L1','EXIT']],
+];
+const TOUR={sel:'r1'};
+TOURS.forEach(([k,name,css,seq])=>{ SEG[k]={css,hex:parseInt(css.slice(1),16),name,tour:true,pts:PP(seq.map(n=>(TN[n]||TV[n]).slice(0,2)))};
+  let i=0; seq.forEach(n=>{ if(TV[n]) STOPS_T.push({seg:k,n:++i,t:`${n} · ${TV[n][2]}`,p:P(TV[n][0],TV[n][1]),tag:'',tour:true}); });
+  STOPS_T.push({seg:k,n:'X0',t:'X0 · Storyline – choose themes',p:P(15.0,14.0),tag:'',tour:true}); });
+const ROUTES={pub:['pub'],oemA:['oemMain','oemA'],oemB:['oemMain','oemB'],r1:['r1'],r2:['r2'],r3:['r3'],r4:['r4'],r5:['r5']};
 const STOPS=[
   {seg:'pub',n:1,t:'Public entry',p:P(-.2,2.2)},{seg:'pub',n:2,t:'Truck',p:P(3.2,4.4)},{seg:'pub',n:3,t:'Car',p:P(10.6,1.0)},{seg:'pub',n:4,t:'Motorcycle',p:P(18.45,3.0)},
   {seg:'pub',n:5,t:'Public exit',p:P(14.7,-.8)},
-  {seg:'oemMain',n:1,t:'OEM entry',p:P(-.2,3.9)},{seg:'oemMain',n:2,t:'Reception',p:P(6.7,7.0)},{seg:'oemMain',n:3,t:'Lounge',p:P(6.95,10.5)},{seg:'oemMain',n:4,t:'Research Room',p:P(18.0,15.0)},
+  {seg:'oemMain',n:1,t:'OEM entry',p:P(-.2,3.9)},{seg:'oemMain',n:2,t:'Reception',p:P(6.7,7.0)},{seg:'oemMain',n:3,t:'Lounge',p:P(6.95,10.5)},{seg:'oemMain',n:4,t:'Research Room',p:P(14.85,13.9)},
   {seg:'oemA',n:5,t:'Meeting Room 1',p:P(8.45,15.8)},{seg:'oemA',n:6,t:'Meeting Room 2',p:P(9.92,15.6)},
   {seg:'oemB',n:5,t:'Mezzanine café',p:P(18.5,10.8,H1)},{seg:'oemB',n:6,t:'Coffee counter',p:P(23.6,11.95,H1)},{seg:'oemB',n:7,t:'OEM exit (west)',p:P(-.3,5.9)},
 ];
-STOPS.forEach(s=>{ s.css=SEG[s.seg].css; s.tag=s.seg==='pub'?'P':'O'; });
+STOPS.push(...STOPS_T);
+STOPS.forEach(s=>{ s.css=SEG[s.seg].css; if(!s.tour) s.tag=s.seg==='pub'?'P':'O'; });
 
 /* sampling */
 const curveOf=pts=>new THREE.CatmullRomCurve3(pts,false,'centripetal');
@@ -1452,8 +1479,8 @@ Object.keys(SEG).forEach(makeRibbon);
 /* visitors – true-scale walking people wearing a route-coloured lanyard, with a matching floor ring */
 const VIS=[]; // {route,off,obj,P,lane}
 let _vs=11; const vrand=()=>{ _vs=(_vs*48271)%2147483647; return _vs/2147483647; };
-[['pub',0x0e9f8e,6],['oemA',0xe8772e,3],['oemB',0xc9541c,4]].forEach(([r,hex,n])=>{ for(let i=0;i<n;i++){
-  const look=lookFor(vrand,r==='pub'?'visitor':'exec'); look.lanyard=hex; look.ring=hex;
+[['pub',0x0e9f8e,6],['oemA',0xe8772e,3],['oemB',0xc9541c,4],...TOURS.map(t=>[t[0],SEG[t[0]].hex,2])].forEach(([r,hex,n])=>{ for(let i=0;i<n;i++){
+  const look=lookFor(vrand,r==='pub'?'visitor':'exec'); if(r[0]==='r'&&r.length===2) look.bag='folio'; look.lanyard=hex; look.ring=hex;
   const P=buildPerson(look); gPaths.add(P.g); VIS.push({route:r,off:i/n+vrand()*.04,obj:P.g,P,lane:(SEG[r==='pub'?'pub':'oemMain'].off)+(vrand()-.5)*.18,ph:vrand()*6.28}); } });
 let visTime=0; const WALK_V=1.25, STRIDE=.72;
 function updatePaths(dt,vis){
@@ -1508,20 +1535,6 @@ seatAt(mx(587),mz(1131)+.03,-Math.PI/2,'exec'); seatAt(mx(626),mz(1131)+.03,-Mat
 seatAt(mx(745)-.03,mz(1060),0,'exec'); seatAt(mx(849)+.03,mz(1022),Math.PI,'visitor'); seatAt(mx(849)+.03,mz(1098),Math.PI,'exec');
 /* media room: two at the table */
 seatAt(16.6,9.82,0,'visitor'); seatAt(18.28,10.48,Math.PI,'exec'); seatAt(18.28,11.19,Math.PI,'visitor');
-/* research room: presenter at the LED wall and three listeners */
-addPerson(gPeople0,23.55,.03,15.0,Math.PI,'talk','staff',0,.3);
-addPerson(gPeople0,21.8,.03,14.4,0,'folded','exec',0,.1);
-addPerson(gPeople0,21.6,.03,15.6,0,'stand','visitor',0,-.1);
-addPerson(gPeople0,20.9,.03,15.0,0,'tablet','exec',0,0);
-/* research main hall: visitors at the wall stations */
-addPerson(gPeople0,15.3,.03,17.1,Math.PI/2,'point','exec',0,0);
-addPerson(gPeople0,18.4,.03,17.15,Math.PI/2,'folded','visitor',0,.2);
-addPerson(gPeople0,17.6,.03,17.2,Math.PI/2,'stand','staff',0,-.3);
-/* research wing: engineers at the demo stations */
-addPerson(gPeople0,22.9,.03,5.45,-Math.PI/2-.4,'talk','staff',0,.3);
-addPerson(gPeople0,21.6,.03,5.55,-Math.PI/2,'stand','exec',0,0);
-addPerson(gPeople0,21.8,.03,7.05,Math.PI/2,'point','exec',0,0);
-addPerson(gPeople0,23.8,.03,5.9,0,'folded','visitor',0,.2);
 /* mezzanine: barista behind the coffee counter, second staff at the back counter */
 addPerson(gPeople1,25.2,H1,12.45,Math.PI,'stand','staff',1,.2,false);
 addPerson(gPeople1,25.6,H1,18.0,Math.PI/2,'tablet','staff',1,-.2,false);
@@ -1608,9 +1621,6 @@ function screen(par,w,h,x,y,z,rotY,title,sub){ const g=new THREE.Group(); g.posi
   box(w+.06,h+.06,.06,VM.trim,0,-h/2-.03,0,g); const t=screenTex(title,sub);
   const p=new THREE.Mesh(new THREE.PlaneGeometry(w,h),new THREE.MeshStandardMaterial({map:t,emissiveMap:t,emissive:0xffffff,emissiveIntensity:.8,roughness:.3})); p.position.z=.031; p.userData.noAO=true; g.add(p); return g; }
 const gDress0=new THREE.Group(); G0.add(gDress0); furnGroups.push(gDress0);
-const ledWall=screen(gDress0,3.6,2.03,24.19,1.4,15.0,-Math.PI/2,'BMGE 2027','Research & innovation showcase');
-reg({id:'F5',name:'Research LED wall',cat:'furn',level:0,obj:ledWall,key:false,tags:['OEM'],ay:2.8,dims:'3.6 × 2.0 m LED wall',height:'bottom edge at +0.4 m',area:'',
-  desc:'Presentation LED wall on the research room side of the store-room wall, with a presenter and a small audience. Indicative: not drawn on the plans.'});
 screen(gDress0,1.45,.82,mx(797),1.35,mz(1167)-.03,Math.PI,'Meeting Room 2','OEM partner sessions');
 screen(gDress0,1.45,.82,19.11,1.3,10.53,-Math.PI/2,'Media Room','Press & content briefings');
 (function(){ const r=RECEPTION[0], g=new THREE.Group(); g.position.set(9.4,1.105,7.35); g.rotation.y=Math.PI; GX.add(g);
@@ -1628,8 +1638,8 @@ function makePlant(h=1.4){
   const m=bakeGroup(g); return m; }
 function placePlant(par,x,y,z,lvl,h){ if(!clearSpot(x,z,lvl,.85))return; const m=makePlant(h); m.position.set(x,y,z); m.rotation.y=crand()*6; par.add(m); (lvl?EXTRA_CIR1:EXTRA_CIR0).push([x,z,.3]); }
 const gPlantsX=new THREE.Group(); GX.add(gPlantsX); furnGroups.push(gPlantsX);
-[[.5,.5],[.5,8.5],[26.5,.5],[11.3,8.55],[5.5,.6],[18.6,8.55],[19.5,.5]].forEach(([x,z])=>placePlant(gPlantsX,x,0,z,0,1.5));
-[[13.55,12.6],[13.55,18.35],[23.8,12.4],[23.8,18.35],[19.7,3.7],[26.35,3.7],[19.7,11.5]].forEach(([x,z])=>placePlant(gDress0,x,.03,z,0,1.3));
+[[.5,.5],[.5,8.5],[26.5,.5],[11.3,8.55],[5.5,.6],[19.5,.5]].forEach(([x,z])=>placePlant(gPlantsX,x,0,z,0,1.5));
+
 const gDress1=new THREE.Group(); G1.add(gDress1); furnGroups.push(gDress1);
 [[15.95,16.35],[13.35,13.4]].forEach(([x,z])=>placePlant(gDress1,x,H1,z,1,1.3));
 /* brochure stand at the public entry */
@@ -1637,21 +1647,6 @@ const gDress1=new THREE.Group(); G1.add(gDress1); furnGroups.push(gDress1);
   box(.42,.02,.3,VM.trim,0,0,0,g); box(.04,1.25,.04,VM.alu,0,0,-.05,g);
   for(let i=0;i<3;i++){ const sh=box(.38,.008,.1,VM.alu,0,.55+i*.25,.02,g); sh.rotation.x=-.3; for(let j=0;j<3;j++){ const b=box(.1,.2,.012,pmat([0x0e9f8e,0xe8772e,0x203d5c][j],.5),-.12+j*.12,.56+i*.25,.05,g); b.rotation.x=-.3; } }
   shadowify(g); if(clearSpot(.9,5.2,0,.6)){ GX.add(g); EXTRA_CIR0.push([.9,5.2,.3]); } })();
-
-/* research room: seven demo stations – four in the main hall, three in the north-east wing (indicative layout) */
-(function(){ const g=new THREE.Group(); gDress0.add(g);
-  const station=(x,z,rot,title)=>{ const t=new THREE.Group(); t.position.set(x,.03,z); t.rotation.y=rot; g.add(t);
-    box(1.8,.9,.8,MATS.white,0,0,0,t); box(1.84,.04,.84,MATS.quartz,0,.9,0,t);
-    const scr=screen(t,1.0,.56,0,1.55,-.3,0,title,'Live demo'); 
-    box(.06,.6,.06,VM.trim,0,.94,-.3,t);
-    const prod=rbox(.42,.16,.3,.04,VM.satin); prod.position.set(-.45,1.02,.1); t.add(prod); const prod2=new THREE.Mesh(new THREE.CylinderGeometry(.12,.12,.22,24),VM.alu); prod2.position.set(.45,1.03,.1); t.add(prod2);
-    EXTRA_COL0.push({x0:x-1.0,z0:z-.5,x1:x+1.0,z1:z+.5}); };
-  station(22.0,4.5,0,'Electrification'); station(22.0,8.3,Math.PI,'ADAS sensors'); station(25.2,5.6,-Math.PI/2,'Software-defined vehicle');
-  station(15.0,18.26,Math.PI,'Battery systems'); station(18.0,18.26,Math.PI,'Power electronics'); station(21.0,18.26,Math.PI,'E-axle & motors');
-  station(16.2,12.5,0,'Hydrogen & fuel cell');
-  shadowify(g);
-  reg({id:'F6',name:'Research stations ×7',cat:'furn',level:0,obj:g,key:true,tags:['OEM'],ay:2.4,ax:19.5,az:12.5,dims:'7 × demo counter 1.8 × 0.8 m with screens',height:'0.9 m counter',area:'',
-    desc:'Seven demo stations: Battery systems, Power electronics and E-axle & motors along the south wall, Hydrogen & fuel cell on the north wall of the main hall, and Electrification, ADAS sensors and Software-defined vehicle in the north-east wing. The LED wall presentation area sits at the east end. Indicative layout, not on the plans.'}); })();
 
 /* LED pixel floor tiles around the concept vehicles (blue at the car, purple at the truck), as in the reference photos */
 const gPixels=new THREE.Group(); GX.add(gPixels);
@@ -1762,6 +1757,226 @@ const gHall=new THREE.Group(); root.add(gHall);
     shadowify(g); }
 })();
 const HALL_FOG=new THREE.Fog(0xeceae6,60,140); scene.fog=HALL_FOG;
+/* ============================ Research room exhibits (plan rev. A5, from BMGE_27_Exhibit_Dimension_list) ============================
+   Themed zones: Entry storyline (X0), Bharat (B), ADAS (A), Electrification (E), Safety & Security (S), SDV & Cockpit (D).
+   Sizes are taken from the exhibit list where given; others are assumed (marked TBC in the element card). */
+const THEME={X:{c:0x1c1f24,css:'#1c1f24',n:'Entry storyline'},B:{c:0xe8772e,css:'#e8772e',n:'Bharat'},A:{c:0x2f6fed,css:'#2f6fed',n:'ADAS'},
+  E:{c:0x3f8f5a,css:'#3f8f5a',n:'Electrification'},S:{c:0xc8463c,css:'#c8463c',n:'Safety & Security'},D:{c:0x7a5c8e,css:'#7a5c8e',n:'SDV & Cockpit'}};
+const gEx=new THREE.Group(); G0.add(gEx); furnGroups.push(gEx);
+const EXM={}; const exMat=(hex,o={})=>{ const k=hex+JSON.stringify(o); if(!EXM[k]) EXM[k]=new THREE.MeshStandardMaterial({color:hex,roughness:o.r??.45,metalness:o.m??0,emissive:o.e??0,emissiveIntensity:o.ei??1}); return EXM[k]; };
+const FY=.03; // finished floor level in the research room
+/* ---------- zone floor inlays ---------- */
+const ZONE_RECTS=[['X',13.12+1.13,12.95,16.75,15.1],['B',13.12,16.26,18.45,18.76],['S',21.0,16.75,24.23,18.76],['S',22.65,13.3,24.23,16.75],
+  ['A',17.6,13.6,22.4,16.1],['E',23.3,9.05,24.23,11.45],['D',19.26,3.24,26.77,9.0],['D',19.26,9.0,20.55,12.0]];
+ZONE_RECTS.forEach(([t,x0,z0,x1,z1])=>{
+  const w=x1-x0-.12, d=z1-z0-.12, cx=(x0+x1)/2, cz=(z0+z1)/2;
+  const p=new THREE.Mesh(new THREE.PlaneGeometry(w,d).rotateX(-Math.PI/2),new THREE.MeshBasicMaterial({color:THEME[t].c,transparent:true,opacity:.09,depthWrite:false,polygonOffset:true,polygonOffsetFactor:-2}));
+  p.position.set(cx,FY+.004,cz); p.userData.noAO=true; p.renderOrder=1; gEx.add(p);
+  const e=new THREE.LineSegments(new THREE.EdgesGeometry(new THREE.PlaneGeometry(w,d).rotateX(-Math.PI/2)),new THREE.LineDashedMaterial({color:THEME[t].c,dashSize:.22,gapSize:.14,transparent:true,opacity:.75}));
+  e.position.set(cx,FY+.006,cz); e.computeLineDistances(); gEx.add(e);
+});
+/* ---------- helpers ---------- */
+function signPanel(code,title,t,w=.9,h=.2){ const c=document.createElement('canvas'); c.width=1024; c.height=Math.round(1024*h/w); const x=c.getContext('2d');
+  x.fillStyle='#ffffff'; x.fillRect(0,0,c.width,c.height); x.fillStyle=THEME[t].css; x.fillRect(0,0,Math.round(c.height*1.15),c.height);
+  x.fillStyle='#fff'; x.font=`800 ${Math.round(c.height*.48)}px Inter,system-ui,Arial`; x.textAlign='center'; x.textBaseline='middle'; x.fillText(code,c.height*.575,c.height/2);
+  x.fillStyle='#1c1f24'; x.textAlign='left'; let fs=Math.round(c.height*.36); x.font=`700 ${fs}px Inter,system-ui,Arial`;
+  while(x.measureText(title).width>c.width-c.height*1.35&&fs>10){ fs--; x.font=`700 ${fs}px Inter,system-ui,Arial`; }
+  x.fillText(title,c.height*1.35,c.height/2);
+  const tx=new THREE.CanvasTexture(c); tx.colorSpace=THREE.SRGBColorSpace; tx.anisotropy=8; return new THREE.MeshStandardMaterial({map:tx,roughness:.5}); }
+/* face: direction the station faces (visitor side) as a unit vector name: 'N','S','E','W' */
+const FACE={N:[0,-1],S:[0,1],E:[1,0],W:[-1,0]};
+const ROT={N:Math.PI,S:0,E:Math.PI/2,W:-Math.PI/2};   // rotation so local +z points to the visitor side
+function counter(par,x0,z0,x1,z1,h,t,face){
+  const w=x1-x0,d=z1-z0,cx=(x0+x1)/2,cz=(z0+z1)/2;
+  box(w,h-.04,d,MATS.white,cx,FY,cz,par); box(w+.03,.04,d+.03,MATS.quartz,cx,FY+h-.04,cz,par); box(w-.02,.07,d-.02,MATS.dark,cx,FY,cz,par);
+  const [fx,fz]=FACE[face], band=box(fx?.012:w,.09,fz?.012:d,exMat(THEME[t].c,{r:.4}),cx+fx*(w/2+.006),FY+h-.17,cz+fz*(d/2+.006),par); return FY+h; }
+function wallScreen(par,w,h,x,y,z,face,title,sub){ return screen(par,w,h,x,y+h/2+.03,z,ROT[face],title,sub); }
+function headerSign(par,code,title,t,x,y,z,face,w=1.0){ const m=new THREE.Mesh(new THREE.PlaneGeometry(w,w*.2),signPanel(code,title,t,w,w*.2)); m.position.set(x,y,z); m.rotation.y=ROT[face]; m.userData.noAO=true; par.add(m); return m; }
+function prod(par,kind,x,y,z,s=1,rot=0){ const g=new THREE.Group(); g.position.set(x,y,z); g.rotation.y=rot; g.scale.setScalar(s); par.add(g);
+  if(kind==='ecu'){ box(.3,.06,.22,VM.satin,0,0,0,g); for(let i=0;i<5;i++) box(.012,.03,.2,VM.alu,-.12+i*.06,.06,0,g); }
+  else if(kind==='radar'){ box(.12,.1,.05,exMat(0x22262b),0,0,0,g); box(.1,.08,.004,exMat(0x3a3f47,{r:.2}),0,.01,.027,g); }
+  else if(kind==='camera'){ box(.1,.07,.09,exMat(0x22262b),0,0,0,g); cyl(.025,.02,MATS.glass,0,.035,.05,g,16,Math.PI/2); }
+  else if(kind==='chip'){ box(.06,.012,.06,exMat(0x1a1c20),0,0,0,g); box(.04,.004,.04,exMat(0x8a8f96,{m:.6}),0,.012,0,g); }
+  else if(kind==='motor'){ cyl(.11,.24,VM.alu,0,.11,0,g,24,0,Math.PI/2); cyl(.03,.1,VM.satin,.16,.11,0,g,12,0,Math.PI/2); }
+  else if(kind==='axle'){ cyl(.12,.28,VM.alu,0,.12,0,g,24,0,Math.PI/2); cyl(.03,.7,VM.satin,0,.12,0,g,10,0,Math.PI/2); box(.18,.16,.2,VM.satin,-.05,.04,.12,g); }
+  else if(kind==='inverter'){ box(.4,.18,.25,VM.alu,0,0,0,g); box(.36,.02,.21,VM.satin,0,.18,0,g); }
+  else if(kind==='box'){ box(.32,.08,.26,VM.satin,0,0,0,g); }
+  else if(kind==='shock'){ cyl(.035,.42,VM.alu,0,.21,0,g,16); for(let i=0;i<9;i++) cyl(.07,.012,exMat(0xc8463c,{r:.4,m:.3}),0,.08+i*.035,0,g,18); }
+  else if(kind==='laptop'){ box(.32,.016,.22,VM.alu,0,0,0,g); const h=box(.32,.21,.01,VM.alu,0,.016,-.11,g); h.rotation.x=-.3; }
+  return g; }
+const EX_EL=[];
+function exReg(code,t,name,obj,dims,height,desc,o={}){ EX_EL.push(reg({id:'X'+code,code,name,cat:'exh',color:THEME[t].css,level:0,obj,key:!!o.key,tags:['OEM'],dims,height,area:o.area||'',desc,ay:o.ay??2.0,ax:o.ax,az:o.az,pub:o.pub})); }
+const exCol=(x0,z0,x1,z1)=>EXTRA_COL0.push({x0,z0,x1,z1});
+
+/* ============ X0 · Entry storyline exhibit (straight ahead of the door) ============ */
+(function(){ const g=new THREE.Group(); gEx.add(g);
+  const C=[14.35,14.0], R=2.25, cols=[THEME.B.c,THEME.A.c,THEME.E.c,0x2fb5a8,THEME.S.c,THEME.D.c];
+  const frameM=exMat(0xf4f3f0,{r:.35});
+  [-.42,-.252,-.084,.084,.252,.42].forEach((a,i)=>{ const x=C[0]+R*Math.cos(a), z=C[1]+R*Math.sin(a);
+    const p=new THREE.Group(); p.position.set(x,FY,z); p.rotation.y=-a-Math.PI/2; g.add(p);   // local +z faces the arc centre (the door)
+    box(.4,2.2,.12,frameM,0,0,0,p);
+    const glow=new THREE.Mesh(new THREE.PlaneGeometry(.3,2.0),new THREE.MeshStandardMaterial({color:cols[i],emissive:cols[i],emissiveIntensity:1.6,roughness:.5,toneMapped:false}));
+    glow.position.set(0,1.1,.062); glow.userData.noAO=true; p.add(glow);
+    const back=glow.clone(); back.position.z=-.062; back.rotation.y=Math.PI; p.add(back);
+    exCol(x-.2,z-.2,x+.2,z+.2); });
+  /* curved white table with a cut-away vehicle model */
+  const sh=new THREE.Shape(), a0=-.5, a1=.5, r0=1.45, r1=1.95; sh.absarc(0,0,r1,a0,a1,false); sh.absarc(0,0,r0,a1,a0,true);
+  const top=new THREE.Mesh(new THREE.ExtrudeGeometry(sh,{depth:.05,bevelEnabled:false}).rotateX(Math.PI/2),frameM); top.position.set(C[0],FY+.92,C[1]); top.rotation.y=0; g.add(top);
+  const ped=box(.28,.88,.9,frameM,C[0]+1.72,FY,C[1],g);
+  const model=buildConceptCar(); model.scale.setScalar(.24); model.position.set(C[0]+1.7,FY+.92,C[1]); model.rotation.y=Math.PI/2; shadowify(model); g.add(model);
+  exCol(C[0]+1.42,C[1]-.6,C[0]+1.98,C[1]+.6);
+  /* floor marking for the briefing pocket in front of the table, and the keep-clear door landing */
+  const mk=(x0,z0,x1,z1,col,op)=>{ const m=new THREE.Mesh(new THREE.PlaneGeometry(x1-x0,z1-z0).rotateX(-Math.PI/2),new THREE.MeshBasicMaterial({color:col,transparent:true,opacity:op,depthWrite:false,polygonOffset:true,polygonOffsetFactor:-3}));
+    m.position.set((x0+x1)/2,FY+.006,(z0+z1)/2); m.userData.noAO=true; m.renderOrder=2; g.add(m); };
+  mk(13.12,12.05,14.3,16.2,0x16a05a,.13);
+  headerSign(g,'X0','The BMGE 2027 story','X',C[0]+R-.2,2.22,C[1],'W',1.2);
+  shadowify(g);
+  exReg('X0','X','Entry storyline exhibit',g,'6 backlit panels 0.4 × 2.2 m on a 2.6 m arc · curved table ≈1.9 × 0.5 m · cut-away car model','2.2 m panels · 0.92 m table',
+    'First thing visitors see, straight ahead of the research-room door. The six lit panels use the zone colours (Bharat, ADAS, Electrification, Bosch Mobility, Safety, SDV), so the guide can ask which themes the group wants and point to the matching coloured zone. A briefing pocket for about 8 people sits in front of the table; the 1.2 m landing inside the door (green) and a 1 m bypass to the north stay clear so others can pass. Size estimated from the reference photo – TBC.',{key:true,ay:2.75,ax:15.6,az:14.0});
+})();
+
+/* ============ ADAS ============ */
+(function(){ const g=new THREE.Group(); gEx.add(g);
+  /* A1 – ADAS CV table 3.96 × 1.52 × 1.37 m with three 50" screens on a central spine */
+  const x0=18.0,z0=14.1,x1=21.96,z1=15.62, cx=(x0+x1)/2, cz=(z0+z1)/2;
+  box(x1-x0,.88,z1-z0,MATS.white,cx,FY,cz,g); box(x1-x0+.03,.04,z1-z0+.03,MATS.quartz,cx,FY+.88,cz,g); box(x1-x0-.02,.07,z1-z0-.02,MATS.dark,cx,FY,cz,g);
+  for(const s of [-1,1]) box(x1-x0,.09,.012,exMat(THEME.A.c),cx,FY+.72,cz+s*(z1-z0)/2,g);
+  box(3.5,.46,.1,MATS.white,cx,FY+.92,cz,g);   // upstand to 1.37 m
+  for(let i=-1;i<=1;i++){ for(const s of [-1,1]){ const sc=screen(g,1.1,.62,cx+i*1.18,FY+1.38+.34,cz+s*.06,s>0?0:Math.PI,['Perception','Driving','Fusion'][i+1],'ADAS CV'); } }
+  for(let i=0;i<4;i++){ prod(g,'radar',x0+.5+i*.9,FY+.92,z0+.3,1,0); prod(g,'camera',x0+.5+i*.9,FY+.92,z1-.3,1,Math.PI); }
+  exCol(x0,z0,x1,z1);
+  exReg('A1','A','ADAS CV – Perception & driving (PS)',g,'table 3.96 × 1.52 m (13 × 5 ft)','1.37 m (4.5 ft) · 3 × 50" screens on the spine',
+    'Centre-piece of the ADAS zone: table-top demo of camera-based perception and automated driving, viewable from both long sides. Three 50" screens sit on a central spine. Size from the exhibit list.',{key:true,ay:2.75});
+  shadowify(g);
+})();
+
+/* ============ Electrification (wing entrance, east wall) ============ */
+(function(){ const g=new THREE.Group(); gEx.add(g); const h=counter(g,23.63,9.25,24.23,11.25,1.0,'E','W');
+  prod(g,'axle',23.93,h,9.75,1,Math.PI/2); prod(g,'box',23.93,h,10.4,1,Math.PI/2); prod(g,'inverter',23.93,h,10.95,.8,Math.PI/2);
+  wallScreen(g,.9,.5,24.2,1.2,9.85,'W','X-in-1','Co-axial e-axle'); wallScreen(g,.9,.5,24.2,1.2,10.75,'W','CCON · DINV','Power electronics');
+  headerSign(g,'E1','EM · Electrification','E',24.2,2.12,10.25,'W',1.2);
+  exCol(23.63,9.25,24.23,11.25); shadowify(g);
+  exReg('E1','E','EM: X-in-1 (co-axial) · CCON Gen5 · DINV',g,'counter 2.0 × 0.6 m · X-in-1 0.5 × 0.5 × 0.4 · CCON 0.32 × 0.26 × 0.08 · DINV 0.4 × 0.25 × 0.18 m','1.0 m counter · 2 screens + internet',
+    'Electrification exhibits at the entrance to the wing: the co-axial X-in-1 e-axle, the Gen5 charging converter (CCON) and the DC inverter (DINV). Exhibit sizes from the list.');
+})();
+
+/* ============ Bharat (south wall, west) ============ */
+(function(){
+  /* B2 – B-SDV mini demo car on a 1.8 × 1.0 m table + 4 screens */
+  const g=new THREE.Group(); gEx.add(g);
+  box(1.8,.71,1.0,MATS.white,14.4,FY,18.26,g); box(1.83,.04,1.03,MATS.quartz,14.4,FY+.71,18.26,g); box(1.8,.08,.012,exMat(THEME.B.c),14.4,FY+.6,17.76,g);
+  const car=buildConceptCar(); car.scale.setScalar(.16); car.position.set(14.4,FY+.75,18.2); shadowify(car); g.add(car);
+  [13.55,14.17,14.79,15.41].forEach((x,i)=>wallScreen(g,.58,.33,x,1.3,18.73,'N',['Mini demo car','B-SDV','Architecture','Assets'][i],'BEG'));
+  const post=new THREE.Group(); post.position.set(13.3,FY,17.2); g.add(post); box(.6,1.5,.03,exMat(0xffffff),0,.05,0,post); box(.56,.25,.032,exMat(THEME.B.c),0,1.28,0,post); box(.3,.05,.3,VM.trim,0,0,0,post);
+  headerSign(g,'B2','B-SDV architecture & assets','B',14.4,2.12,18.73,'N',1.3);
+  exCol(13.5,17.76,15.3,18.76); exCol(13.0,17.0,13.6,17.4); shadowify(g);
+  exReg('B2','B','B-SDV architecture & assets – mini demo car (BEG)',g,'table 1.8 × 1.0 m in a 3.0 × 2.5 m area','0.75 m table · 1 + 3 screens · poster stand',
+    'Bharat SDV architecture with the SDV mini demo car on a 1.8 × 1.0 m table, one screen for the car and three for the other BEG topics, plus a poster stand. The full 3 × 2.5 m area asked for in the list is available.');
+  /* B4 – Samarth Bharat virtualization desk */
+  const g4=new THREE.Group(); gEx.add(g4);
+  box(1.6,.71,.8,MATS.white,17.2,FY,18.36,g4); box(1.63,.04,.83,MATS.quartz,17.2,FY+.71,18.36,g4); box(1.6,.08,.012,exMat(THEME.B.c),17.2,FY+.6,17.96,g4);
+  for(const dx of [-.38,.38]){ const m=new THREE.Group(); m.position.set(17.2+dx,FY+.75,18.5); g4.add(m); box(.72,.32,.03,VM.trim,0,.14,0,m); box(.06,.14,.06,VM.trim,0,0,0,m);
+    const s=new THREE.Mesh(new THREE.PlaneGeometry(.68,.28),new THREE.MeshStandardMaterial({color:0x0b1220,emissive:0x2c4f7a,emissiveIntensity:.8})); s.position.set(0,.3,-.017); s.rotation.y=Math.PI; m.add(s); m.rotation.y=dx>0?-.12:.12; }
+  wallScreen(g4,1.44,.81,17.2,1.3,18.73,'N','Samarth Bharat','Virtualization');
+  const ch=chair(MATS.fabric,0); ch.position.set(17.2,FY,17.62); g4.add(ch);
+  headerSign(g4,'B4','Virtualization · Samarth Bharat','B',17.2,2.22,18.73,'N',1.3);
+  exCol(16.4,17.96,18.0,18.76); shadowify(g4);
+  exReg('B4','B','Virtualization – Samarth Bharat (BGSW/EVE)',g4,'desk 1.6 × 0.8 m + chair','0.75 m desk · 2 × 32" curved + 65" TV','Hands-on virtualization demo at a desk with a chair, two 32" curved monitors and a 65" TV on the wall. Desk size assumed – the list asks for "table & chair".');
+})();
+
+/* ============ Safety & Security (south-east corner + LED wall) ============ */
+(function(){
+  /* S1 – SafeSphere + accident lifecycle */
+  const g=new THREE.Group(); gEx.add(g);
+  box(1.22,.87,.91,MATS.white,22.01,FY,18.06,g); box(1.25,.04,.94,MATS.quartz,22.01,FY+.87,18.06,g); box(1.22,.08,.012,exMat(THEME.S.c),22.01,FY+.74,17.6,g);
+  prod(g,'laptop',21.8,FY+.91,18.0,1,0); prod(g,'box',22.3,FY+.91,18.1,.8);
+  wallScreen(g,1.0,.56,21.55,1.3,18.73,'N','SafeSphere','Accident lifecycle'); wallScreen(g,1.0,.56,22.6,1.3,18.73,'N','EDR · CDR','BNCAP 3.0');
+  const st=new THREE.Group(); st.position.set(21.2,FY,17.45); st.rotation.y=.3; g.add(st); box(.61,1.52,.03,exMat(0xffffff),0,.05,0,st); box(.57,.3,.032,exMat(THEME.S.c),0,1.22,0,st); box(.32,.05,.3,VM.trim,0,0,0,st);
+  headerSign(g,'S1','SafeSphere + accident lifecycle','S',22.07,2.12,18.73,'N',1.3);
+  exCol(21.4,17.6,22.62,18.51); exCol(20.9,17.25,21.5,17.65); shadowify(g);
+  exReg('S1','S','SafeSphere + accident lifecycle management (EDR, CDR, BNCAP 3.0)',g,'table 4 × 3 × 3 ft (1.22 × 0.91 × 0.91 m) in 6 × 5 ft area','0.91 m table · 2 TVs · standee 2 × 5 ft',
+    'Two rows of the list combined: PA-CS SafeSphere and accident lifecycle management (EDR, CDR, BNCAP 3.0 / SafeSphere). Needs at least 4 power points and internet. Sizes from the list.');
+  /* S2 – Cybersecurity */
+  const g2=new THREE.Group(); gEx.add(g2);
+  box(.76,.87,.76,MATS.white,23.63,FY,18.38,g2); box(.79,.04,.79,MATS.quartz,23.63,FY+.87,18.38,g2); box(.76,.08,.012,exMat(THEME.S.c),23.63,FY+.74,18.0,g2);
+  prod(g2,'laptop',23.63,FY+.91,18.35,1,0);
+  [23.25,23.63,24.01].forEach((x,i)=>wallScreen(g2,.36,.22+.0,x,1.35,18.73,'N',['AIS 189','AIS 190','ETAS'][i],''));
+  headerSign(g2,'S2','Cybersecurity · AIS 189/190','S',23.63,2.12,18.73,'N',1.15);
+  exCol(23.03,18.0,24.23,18.76); shadowify(g2);
+  exReg('S2','S','Cybersecurity AIS 189/190 + regulatory compliance tools (ETAS)',g2,'table 2.5 × 2.5 × 3 ft (0.76 × 0.76 × 0.91 m) · 1.2 m wall run','0.91 m table · 3 screens + internet',
+    'Three rows of the list combined into one station: Cybersecurity (AIS 189, 190) from ETAS / M/TEL and ETAS cybersecurity tools & solutions for regulatory compliance for Indian OEMs. Sizes from the list.');
+  /* S4 – Advanced VMM on the LED wall (3.0 m) */
+  const g4=new THREE.Group(); gEx.add(g4); screen(g4,3.0,1.69,24.19,1.45,15.0,-Math.PI/2,'Advanced VMM','Vehicle motion management');
+  headerSign(g4,'S4','Advanced VMM · presentation','S',24.2,2.25,15.0,'W',1.4);
+  exReg('S4','S','Advanced VMM – presentation on the LED wall (VM)',g4,'LED wall 3.0 × 1.7 m','bottom edge at +0.6 m','Presentation of Advanced Vehicle Motion Management on the LED wall, with a small talk area in front (≈ 8 people standing).',{ay:2.7});
+})();
+
+/* ============ SDV & Cockpit (north-east wing) ============ */
+(function(){
+  /* D1 – AI cockpit simulator 10 × 10 × 10 ft: a 2.3 m-high enclosure (ceiling is 2.35 m), open to the east */
+  const g=new THREE.Group(); gEx.add(g); const x0=19.6,z0=3.35,x1=22.65,z1=6.4, H=2.3, pan=exMat(0x24272c,{r:.6});
+  box(x1-x0,H,.06,pan,(x0+x1)/2,FY,z0+.03,g); box(x1-x0,H,.06,pan,(x0+x1)/2,FY,z1-.03,g); box(.06,H,z1-z0,pan,x0+.03,FY,(z0+z1)/2,g);
+  box(x1-x0,.06,z1-z0,pan,(x0+x1)/2,FY+H-.06,(z0+z1)/2,g); for(const z of [z0+.03,z1-.03]) box(.08,H,.08,exMat(THEME.D.c),x1-.04,FY,z,g);
+  box(x1-x0,.1,.065,exMat(THEME.D.c,{e:THEME.D.c,ei:.6}),(x0+x1)/2,FY+H-.25,z1,g);
+  /* seat + dashboard + wraparound screen inside */
+  const seat=new THREE.Group(); seat.position.set(21.4,FY,4.88); seat.rotation.y=-Math.PI/2; g.add(seat);
+  box(.55,.45,.55,VM.satin,0,0,0,seat); const bk=box(.55,.7,.12,VM.satin,0,.45,-.24,seat); bk.rotation.x=-.2;
+  box(.9,.12,.3,VM.trim,20.55,FY+.75,4.88,g).rotation.y=Math.PI/2; cyl(.17,.04,VM.trim,20.75,FY+.95,4.88,g,24,0,Math.PI/2.6);
+  const wrap=new THREE.Mesh(new THREE.CylinderGeometry(1.2,1.2,1.0,32,1,true,-Math.PI*.35,Math.PI*.7),new THREE.MeshStandardMaterial({color:0x0b1220,emissive:0x2c5f9a,emissiveIntensity:.9,side:THREE.DoubleSide}));
+  wrap.position.set(21.45,FY+1.25,4.88); wrap.rotation.y=-Math.PI/2; wrap.userData.noAO=true; g.add(wrap);
+  screen(g,1.21,.68,22.66,1.2,6.0,Math.PI/2,'AI cockpit','AI Box');
+  headerSign(g,'D1','AI-powered cockpit / AI Box simulator','D',22.66,2.05,4.6,'E',1.5);
+  exCol(x0,z0,x1,z1); shadowify(g);
+  exReg('D1','D','AI-powered cockpit / AI Box simulator (XC)',g,'≈ 3.05 × 3.05 m (10 × 10 ft) footprint','10 ft in the list – the research room ceiling is 2.35 m, so the enclosure is shown at 2.3 m',
+    'Walk-in cockpit simulator for the AI-powered cockpit and AI Box, with a 55" TV outside. The list gives 10 × 10 × 10 ft; the height needs checking against the 2.35 m ceiling of the research room.',{key:true,ay:2.75});
+  /* D4–D6 – ETAS SDV tools on the east wall */
+  [['D4',4.45,6.28,'AI based measurement & calibration for SDVs (ETAS)','6 × 2.5 × 3 ft (1.83 × 0.76 × 0.91 m)','0.91 m · 4 screens + internet',4,'AI calibration'],
+   ['D5',6.63,7.54,'SCORE demo – integrated SOVD (ETAS)','3 × 2.5 × 3 ft (0.91 × 0.76 × 0.91 m)','0.91 m · 2 screens + internet',2,'SCORE · SOVD'],
+   ['D6',7.89,8.8,'AI Coder (ETAS)','3 × 2.5 × 3 ft (0.91 × 0.76 × 0.91 m)','0.91 m · 1 screen + internet',1,'AI Coder']].forEach(([code,za,zb,name,dims,ht,n,short])=>{
+    const gg=new THREE.Group(); gEx.add(gg); const h=counter(gg,26.01,za,26.77,zb,.91,'D','W'); prod(gg,'laptop',26.35,h,(za+zb)/2,1,-Math.PI/2);
+    const L=zb-za, sw=Math.min(.8,(L-.1)/Math.min(n,2)); for(let i=0;i<n;i++){ const col=i%2, row=Math.floor(i/2), cnt=Math.min(n,2);
+      wallScreen(gg,sw,sw*.5625,26.74,1.2+row*(sw*.5625+.06),za+L/2+(col-(cnt-1)/2)*(sw+.05),'W',short,'ETAS'); }
+    headerSign(gg,code,short,'D',26.74,2.18,(za+zb)/2,'W',Math.min(1.1,L)); exCol(26.01,za,26.77,zb); shadowify(gg);
+    exReg(code,'D',name,gg,dims,ht,'ETAS software-defined-vehicle tools. Size from the exhibit list.'); });
+  /* D7–D9 – SOI units on the west wall (1.5 × 1.02 × 1.5 m each, 2 screens) */
+  [['D7',6.75,8.25,'S2S – API (SOI)','S2S – API','Shipped from Germany – check customs lead time.'],
+   ['D8',8.6,10.1,'Google SDV (SOI)','Google SDV','New exhibit added to the list.'],
+   ['D9',10.45,11.95,'SDV Light Framework (SOI)','SDV Light','New exhibit added to the list.']].forEach(([code,za,zb,name,short,note])=>{
+    const gg=new THREE.Group(); gEx.add(gg); const cz=(za+zb)/2;
+    box(1.02,1.46,1.5,exMat(0xf1efeb,{r:.4}),19.77,FY,cz,gg); box(1.04,.04,1.52,MATS.quartz,19.77,FY+1.46,cz,gg);
+    box(.012,.12,1.5,exMat(THEME.D.c),20.285,FY+1.2,cz,gg);
+    const sc=new THREE.Mesh(new THREE.PlaneGeometry(.9,.5),new THREE.MeshStandardMaterial({color:0x0b1220,emissive:0x3a2f6a,emissiveIntensity:.9})); sc.position.set(20.29,FY+.85,cz); sc.rotation.y=Math.PI/2; sc.userData.noAO=true; gg.add(sc);
+    for(const dz of [-.37,.37]) wallScreen(gg,.68,.38,19.29,1.62,cz+dz,'E',short,'SOI');
+    headerSign(gg,code,short,'D',20.3,2.2,cz,'E',1.1); exCol(19.26,za,20.28,zb); shadowify(gg);
+    exReg(code,'D',name,gg,'1.5 × 1.02 × 1.5 m (150 × 102 × 150 cm)','1.5 m unit · 2 screens + power',`Software-defined-vehicle exhibit from SOI, one of three identical units on the west wall of the wing. ${note}`); });
+})();
+
+/* ============ In-line pump on the public floor (corner beside the motorcycle) ============ */
+(function(){ const g=new THREE.Group(); g.position.set(18.43,0,8.43); GX.add(g); const f=new THREE.Group(); f.rotation.y=-Math.PI*.75; g.add(f);
+  box(1.15,.1,1.15,exMat(0x2a2c30,{r:.5}),0,0,0,g);                       // kick plate recess surround
+  box(.91,1.0,.91,exMat(0xf4f3f0,{r:.35}),0,.0,0,g); box(.94,.03,.94,MATS.quartz,0,1.0,0,g);
+  const pump=new THREE.Group(); pump.position.set(0,1.03,.05); f.add(pump);
+  box(.46,.2,.24,exMat(0x5d6168,{r:.35,m:.7}),0,0,0,pump); box(.12,.17,.2,exMat(0x4a4e55,{r:.4,m:.6}),-.29,.0,0,pump);
+  for(let i=0;i<6;i++){ cyl(.022,.12,exMat(0xb9bdc2,{r:.25,m:.9}),-.18+i*.072,.26,0,pump,12); cyl(.012,.05,exMat(0xb9bdc2,{r:.25,m:.9}),-.18+i*.072,.345,0,pump,8); }
+  box(.61,.46,.02,exMat(0x1c1f24,{r:.4}),0,1.03,-.33,f);
+  const sig=new THREE.Mesh(new THREE.PlaneGeometry(.57,.16),signPanel('PS','In-line pump','B',.57,.16)); sig.position.set(0,1.2,-.318); f.add(sig);
+  const cloth=new THREE.Mesh(new THREE.TorusGeometry(.3,.06,10,24,Math.PI*1.2),exMat(0xa11624,{r:.35})); cloth.rotation.x=Math.PI/2; cloth.position.set(.0,1.04,.08); cloth.scale.set(1.1,.7,1); f.add(cloth);
+  const sc=screen(f,.8,.45,0,1.75,-.36,0,'In-line pump','Unveil'); box(.05,1.5,.05,VM.trim,0,0,-.38,f);
+  shadowify(g); EXTRA_COL0.push({x0:17.85,z0:7.85,x1:19.0,z1:9.0});
+  exReg('P1','B','In-line pump with signet, base and kick plate (PS) – public floor',g,'pedestal 3 × 3 × 3.3 ft (0.91 × 0.91 × 1.0 m) · kick plate 2.6 × 2.6 ft · pump 1.5 × 0.8 × 1.2 ft · signet 2 × 1.5 ft','1.0 m pedestal · screen for video',
+    'Moved out of the research room on request: shown on the public exhibition floor in the corner beside the motorcycle, with the red satin unveil cloth, the signet and a video screen. Sizes from the exhibit list.',{ay:2.4,pub:true});
+})();
+
+/* ============ people at the exhibits (skipped automatically where they would stand on a walking route) ============ */
+(function(){ const P=(x,z,face,pose,kind,hy=0)=>addPerson(gPeople0,x,FY,z,face,pose,kind,0,hy);
+  P(15.45,14.9,Math.PI,'talk','staff',.2);                                   // guide at the storyline exhibit
+  P(19.1,16.1,-Math.PI/2,'point','exec',.1); P(20.6,16.05,-Math.PI/2,'folded','exec',-.2); P(19.9,13.75,Math.PI/2,'talk','staff',0);
+  P(14.1,17.35,Math.PI/2,'phone','exec',.2); addPerson(gPeople0,17.2,FY,17.62,Math.PI/2,'seat','staff',0,0,false);
+  P(21.95,17.2,Math.PI/2,'folded','exec',0);
+  addPerson(gPeople0,21.4,FY+.05,4.88,Math.PI,'seat','exec',0,.1,false); P(23.2,5.6,Math.PI,'tablet','staff',.3);
+  P(25.45,5.35,0,'talk','staff',.2); P(25.2,6.0,0,'stand','exec',-.2); P(20.85,9.3,Math.PI,'point','exec',0); P(23.15,10.6,0,'stand','exec',.1);
+  P(23.75,14.3,Math.PI,'talk','staff',.3); P(22.9,15.1,0,'stand','exec',0); P(22.85,15.7,0,'folded','visitor',-.1);
+})();
 /* ============================ App state ============================ */
 const S={mode:'orbit',sel:null,autoHideM:false,explode:0,explodeT:0,quality:2,labels:'key',walls:'solid',auto:false,clip:false};
 const clipPlane=new THREE.Plane(new THREE.Vector3(0,-1,0),1.4);
@@ -1891,7 +2106,8 @@ function applyVisibility(){
   wallGroups.forEach(g=>g.visible=S.walls!=='hide');
   for(const k of ['slab','slabTop','deck']){ const m=MATS[k], gl=S.walls==='glass'; m.transparent=gl; m.opacity=gl?.2:1; m.depthWrite=!gl; m.needsUpdate=true; }
   const po=chk('pOem'); SEG.pub.mesh.visible=chk('pPub'); SEG.oemMain.mesh.visible=po; SEG.oemA.mesh.visible=po&&chk('pOemA'); SEG.oemB.mesh.visible=po&&chk('pOemB');
-  VIS.forEach(v=>v.vis=v.route==='pub'?chk('pPub'):po&&chk(v.route==='oemA'?'pOemA':'pOemB'));
+  const pt=chk('pTour'); TOURS.forEach(([k])=>SEG[k].mesh.visible=pt&&TOUR.sel===k);
+  VIS.forEach(v=>v.vis=v.route==='pub'?chk('pPub'):SEG[v.route].tour?pt&&TOUR.sel===v.route:po&&chk(v.route==='oemA'?'pOemA':'pOemB'));
   syncRibbonLevels(); ui.refreshLabels&&ui.refreshLabels();
 }
 
@@ -1984,7 +2200,7 @@ function walkStep(dt){
     yaw=W.yaw+W.ly; pitch=W.lp-.03;
     if(document.activeElement!==$('#plS')) $('#plS').value=W.u/L*1000;
     let near=null,nd=3.2; STOPS.forEach(s=>{ if(!ROUTES[W.route].includes(s.seg))return; const d=Math.hypot(s.p.x-eye.x,s.p.z-eye.z); if(d<nd&&Math.abs(s.p.y-(eye.y-EYE))<1.3){nd=d;near=s;} });
-    $('#plCap').textContent=({pub:'Public',oemA:'OEM · A Meeting rooms',oemB:'OEM · B Mezzanine'})[W.route]+'  ·  '+(near?near.t:'en route')+'  ·  '+Math.round(W.u/L*100)+'%';
+    $('#plCap').textContent=(SEG[W.route]&&SEG[W.route].tour?'Tour '+W.route.slice(1)+' · '+SEG[W.route].name:({pub:'Public',oemA:'OEM · A Meeting rooms',oemB:'OEM · B Mezzanine'})[W.route])+'  ·  '+(near?near.t:'en route')+'  ·  '+Math.round(W.u/L*100)+'%';
   }else{
     yaw=W.yaw; pitch=W.pitch; const run=keys.has('shift')?3.6:1.8;
     if(keys.has('arrowleft'))W.yaw+=dt*1.8; if(keys.has('arrowright'))W.yaw-=dt*1.8;
@@ -2008,19 +2224,19 @@ addEventListener('keydown',e=>{ if(e.target.tagName==='INPUT'&&e.target.type!=='
 addEventListener('keyup',e=>{ keys.delete(e.key.toLowerCase()); keys.delete('shift'); });
 addEventListener('blur',()=>keys.clear());
 /* ============================ UI: element list ============================ */
-const ORDER=['room','mezz','veh','zone','furn','circ'];
+const ORDER=['room','exh','mezz','veh','zone','furn','circ'];
 const TAGC={'Public':'#0e9f8e','OEM':'#e8772e','OEM·A':'#f0a040','OEM·B':'#c9541c'};
-const lvlText=el=>(el.cat==='veh'||el.cat==='zone'||el.id==='G7')?'Exhibition floor · 0.0 m':el.lvl?'Mezzanine · +2.5 m':'Ground floor · 0.0 m';
+const lvlText=el=>(el.cat==='veh'||el.cat==='zone'||el.id==='G7'||el.pub)?'Exhibition floor · 0.0 m':el.lvl?'Mezzanine · +2.5 m':'Ground floor · 0.0 m';
 const shortName=n=>n.replace(/ \(.*\)/,'').replace(/ – .*/,'');
 const ico=(id,cls='')=>`<svg class="i ${cls}"><use href="#i-${id}"/></svg>`;
 function buildList(filter=''){
   const q=filter.trim().toLowerCase(), box=$('#list'); box.innerHTML=''; let n=0;
   ORDER.forEach(cat=>{
-    const items=ELS.filter(e=>e.cat===cat&&(!q||(e.id+' '+e.name+' '+e.desc).toLowerCase().includes(q)));
+    const items=ELS.filter(e=>e.cat===cat&&(!q||((e.code||'')+' '+e.id+' '+e.name+' '+e.desc).toLowerCase().includes(q)));
     if(!items.length)return; n+=items.length;
     const h=document.createElement('div'); h.className='gh'; h.style.setProperty('--c',CAT[cat].c); h.innerHTML=`<i></i>${CAT[cat].n}`; box.appendChild(h);
     items.forEach(e=>{ const d=document.createElement('div'); d.className='it'+(S.sel===e.id?' on':''); d.dataset.id=e.id; d.tabIndex=0; d.setAttribute('role','button');
-      d.innerHTML=`<b>${e.id}</b><span>${e.name}</span>`; box.appendChild(d); });
+      d.innerHTML=`<b style="${e.color?'color:'+e.color:''}">${e.code||e.id}</b><span>${e.name}</span>`; box.appendChild(d); });
   });
   if(!n) box.innerHTML='<div class="small" style="padding:16px 8px">No elements match.</div>';
   $('#elCount').textContent=q?`${n} / ${ELS.length}`:ELS.length;
@@ -2032,7 +2248,7 @@ $('#q').addEventListener('input',e=>buildList(e.target.value));
 /* ============================ UI: labels ============================ */
 const LBL=[], layer=$('#labels');
 function mkLabel(cls,html,css){ const d=document.createElement('div'); d.className=cls; d.innerHTML=html; if(css)d.style.setProperty('--c',css); d.style.display='none'; layer.appendChild(d); return d; }
-ELS.forEach(e=>{ const d=mkLabel('lbl'+(e.key?'':' minor'),`<i></i><b>${e.id}</b>${shortName(e.name)}`,CAT[e.cat].c); d.addEventListener('click',ev=>{ev.stopPropagation();select(e.id);}); LBL.push({el:e,d,type:'el'}); });
+ELS.forEach(e=>{ const d=mkLabel('lbl'+(e.key?'':' minor'),`<i></i><b>${e.code||e.id}</b>${shortName(e.name)}`,e.color||CAT[e.cat].c); d.addEventListener('click',ev=>{ev.stopPropagation();select(e.id);}); LBL.push({el:e,d,type:'el'}); });
 STOPS.forEach(s=>{ const d=mkLabel('lbl stop',`<b>${s.tag}${s.n}</b><span>${s.t}</span>`,s.css); d.title=s.t; LBL.push({stop:s,d,type:'stop'}); });
 DIMLBL.forEach(l=>{ const d=mkLabel('dimlbl',l.text); LBL.push({dim:l,d,type:'dim'}); });
 const lvlL=[['Ground · +0.0 m',P(XW-.5,0,ZS+1.4),0],['Mezzanine · +2.5 m',P(XW-.5,H1+.3,ZS+1.4),1]].map(([t,p,l])=>({d:mkLabel('lbl lvl',`<b>L${l}</b>${t}`),p,l,type:'lvl'}));
@@ -2040,7 +2256,7 @@ LBL.push(...lvlL);
 const _v=new THREE.Vector3();
 function labelVisible(it){
   if(it.type==='el'){ const e=it.el; if(S.labels==='off'&&S.sel!==e.id)return false; if(S.labels==='key'&&!e.key&&S.sel!==e.id)return false; return visChain(e.obj); }
-  if(it.type==='stop'){ const s=it.stop; if(!chk('tStops'))return false; const o=chk('pOem'); const ok=s.seg==='pub'?chk('pPub'):s.seg==='oemMain'?o:s.seg==='oemA'?o&&chk('pOemA'):o&&chk('pOemB'); return ok&&(s.p.y<1||G1.visible); }
+  if(it.type==='stop'){ const s=it.stop; if(!chk('tStops'))return false; const o=chk('pOem'); const ok=s.tour?chk('pTour')&&TOUR.sel===s.seg:s.seg==='pub'?chk('pPub'):s.seg==='oemMain'?o:s.seg==='oemA'?o&&chk('pOemA'):o&&chk('pOemB'); return ok&&(s.p.y<1||G1.visible); }
   if(it.type==='dim')return chk('tDim'); if(it.type==='lvl')return S.mode==='explode'&&S.explode>.5; return false;
 }
 function priority(it){
@@ -2098,10 +2314,10 @@ const labelOf=id=>LBL.find(l=>l.type==='el'&&l.el.id===id);
 /* ============================ UI: info card ============================ */
 const card=$('#card');
 function cardHTML(el){
-  const c=CAT[el.cat].c, rows=[['Level',lvlText(el)],['Size',el.dims],['Height',el.height],el.area?['Area',el.area]:null].filter(Boolean);
+  const c=el.color||CAT[el.cat].c, rows=[['Level',lvlText(el)],['Size',el.dims],['Height',el.height],el.area?['Area',el.area]:null].filter(Boolean);
   const tags=el.tags.map(t=>`<span class="tag" style="--c:${TAGC[t]}">${t==='Public'?'Public route':t.replace('OEM','OEM route')}</span>`).join('');
   return `<button class="ibtn sq x" data-a="close" aria-label="Close">${ico('x')}</button>
-  <div class="cat" style="--c:${c}"><i></i>${CAT[el.cat].n}<span class="badge">${el.id}</span></div>
+  <div class="cat" style="--c:${c}"><i></i>${CAT[el.cat].n}<span class="badge">${el.code||el.id}</span></div>
   <h2>${el.name}</h2>${tags?`<div class="tags">${tags}</div>`:''}
   <dl>${rows.map(r=>`<dt>${r[0]}</dt><dd>${r[1]}</dd>`).join('')}</dl><p>${el.desc}</p>
   <div class="acts"><button class="btn acc" data-a="focus">${ico('target')}Focus</button><button class="btn" data-a="top">${ico('top')}Top view</button><button class="btn" data-a="inspect">${ico('rotate')}Turntable</button></div>`;
@@ -2133,12 +2349,15 @@ $$('[data-cam]').forEach(b=>b.onclick=()=>{ const k=b.dataset.cam; if(k==='auto'
 $$('#right input[type=checkbox]').forEach(c=>c.onchange=()=>{ applyVisibility(); if(c.id==='secPlane'||c.id==='secFlip')updateSection(); });
 function seg(id,cb){ $$('#'+id+' button').forEach(b=>b.onclick=()=>{ $$('#'+id+' button').forEach(x=>x.classList.toggle('on',x===b)); cb(b.dataset.v||b.dataset.a||b.dataset.w); }); }
 seg('lblMode',v=>{S.labels=v;}); seg('wallMode',v=>{S.walls=v;applyVisibility();}); seg('qual',v=>{S.quality=+v;resize();});
+function setTour(k){ TOUR.sel=k; const t=TOURS.find(x=>x[0]===k); $('#tourBox').style.setProperty('--tc',t[2]); $('#tourName').innerHTML=`<b style="color:${t[2]}">${k.slice(1)} · ${t[1]}</b><br>`+t[3].filter(n=>TV[n]).join(' › ');
+  if(!chk('pTour')) $('#pTour').checked=true; applyVisibility(); if(S.mode==='walk'&&SEG[W.route]&&SEG[W.route].tour) walkSet(k); }
+seg('tourSel',v=>setTour(v)); setTour('r1'); $('#pTour').checked=false;
 seg('secAxis',a=>{ setSecAxis(a); fillRange($('#secS')); }); seg('walkSel',w=>walkSet(w));
 $('#exS').oninput=e=>{ S.explodeT=+e.target.value; $('#exV').textContent=(+e.target.value).toFixed(1)+' m'; };
 $('#secS').oninput=e=>{ sec.v=+e.target.value; updateSection(); };
 $('#spS').oninput=e=>{ W.speed=+e.target.value; $('#spV').textContent=W.speed.toFixed(1)+' m/s'; };
 $$('input[type=range]').forEach(r=>r.addEventListener('input',()=>fillRange(r)));
-$$('[data-walk]').forEach(b=>b.onclick=()=>{ const r=b.dataset.walk; if(S.mode!=='walk') setMode('walk'); walkSet(r); });
+$$('[data-walk]').forEach(b=>b.onclick=()=>{ const r=b.dataset.walk==='tour'?TOUR.sel:b.dataset.walk; if(b.dataset.walk==='tour'&&!chk('pTour')){ $('#pTour').checked=true; applyVisibility(); } if(S.mode!=='walk') setMode('walk'); walkSet(r); });
 $('#plPlay').onclick=()=>{ W.playing=!W.playing; setPlayBtn(); };
 $('#plS').oninput=e=>{ const L=ROUTE_S[W.route].length-1; W.u=+e.target.value/1000*L; };
 $('#plExit').onclick=()=>setMode('orbit');
