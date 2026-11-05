@@ -495,7 +495,7 @@ if(ADD){ try{
     if(o.isPoints||o.isLine||o.userData.noAO||(o.isMesh&&m&&(Array.isArray(m)?m.some(x=>x.transparent):m.transparent)))o.visible=false; }); };
   composer.addPass(gtao); composer.addPass(new ADD.OutputPass());
 }catch(e){ console.warn('Ambient occlusion disabled',e); composer=null; } }
-function renderFrame(){ if(composer&&S.quality>1) composer.render(); else renderer.render(scene,camera); }
+function renderFrame(){ if(composer&&S.quality>1&&!S.fast) composer.render(); else renderer.render(scene,camera); }
 
 const sun=new THREE.DirectionalLight(0xfff4e6,ADD?1.9:2.4);
 sun.position.set(-16,36,26); sun.target.position.set(13.5,0,9.5);
@@ -1479,7 +1479,7 @@ Object.keys(SEG).forEach(makeRibbon);
 /* visitors – true-scale walking people wearing a route-coloured lanyard, with a matching floor ring */
 const VIS=[]; // {route,off,obj,P,lane}
 let _vs=11; const vrand=()=>{ _vs=(_vs*48271)%2147483647; return _vs/2147483647; };
-[['pub',0x0e9f8e,6],['oemA',0xe8772e,3],['oemB',0xc9541c,4],...TOURS.map(t=>[t[0],SEG[t[0]].hex,2])].forEach(([r,hex,n])=>{ for(let i=0;i<n;i++){
+[['pub',0x0e9f8e,3],['oemA',0xe8772e,2],['oemB',0xc9541c,2],...TOURS.map(t=>[t[0],SEG[t[0]].hex,1])].forEach(([r,hex,n])=>{ for(let i=0;i<n;i++){
   const look=lookFor(vrand,r==='pub'?'visitor':'exec'); if(r[0]==='r'&&r.length===2) look.bag='folio'; look.lanyard=hex; look.ring=hex;
   const P=buildPerson(look); gPaths.add(P.g); VIS.push({route:r,off:i/n+vrand()*.04,obj:P.g,P,lane:(SEG[r==='pub'?'pub':'oemMain'].off)+(vrand()-.5)*.18,ph:vrand()*6.28}); } });
 let visTime=0; const WALK_V=1.25, STRIDE=.72;
@@ -1642,12 +1642,6 @@ const gPlantsX=new THREE.Group(); GX.add(gPlantsX); furnGroups.push(gPlantsX);
 
 const gDress1=new THREE.Group(); G1.add(gDress1); furnGroups.push(gDress1);
 [[15.95,16.35],[13.35,13.4]].forEach(([x,z])=>placePlant(gDress1,x,H1,z,1,1.3));
-/* brochure stand at the public entry */
-(function(){ const g=new THREE.Group(); g.position.set(.9,0,5.2); g.rotation.y=-.5;
-  box(.42,.02,.3,VM.trim,0,0,0,g); box(.04,1.25,.04,VM.alu,0,0,-.05,g);
-  for(let i=0;i<3;i++){ const sh=box(.38,.008,.1,VM.alu,0,.55+i*.25,.02,g); sh.rotation.x=-.3; for(let j=0;j<3;j++){ const b=box(.1,.2,.012,pmat([0x0e9f8e,0xe8772e,0x203d5c][j],.5),-.12+j*.12,.56+i*.25,.05,g); b.rotation.x=-.3; } }
-  shadowify(g); if(clearSpot(.9,5.2,0,.6)){ GX.add(g); EXTRA_CIR0.push([.9,5.2,.3]); } })();
-
 /* LED pixel floor tiles around the concept vehicles (blue at the car, purple at the truck), as in the reference photos */
 const gPixels=new THREE.Group(); GX.add(gPixels);
 function pixelTiles(cx,cz,R,cols,seed){
@@ -1673,11 +1667,7 @@ function infoStand(x,z,face,title,sub,accent){
   const head=new THREE.Group(); head.position.set(.03,.98,0); head.rotation.z=.6; g.add(head);
   box(.04,.42,.62,VM.trim,0,-.21,0,head); const sc=new THREE.Mesh(new THREE.PlaneGeometry(.58,.38),new THREE.MeshStandardMaterial({map:tx,emissiveMap:tx,emissive:0xffffff,emissiveIntensity:.7,roughness:.3}));
   sc.rotation.y=Math.PI/2; sc.position.x=.022; sc.userData.noAO=true; head.add(sc); shadowify(g); EXTRA_CIR0.push([x,z,.3]); return g; }
-(function(){ const tryAt=(cands,face,args)=>{ for(const [x,z] of cands){ if(clearSpot(x,z,0,.7)){ infoStand(x,z,face(x,z),...args); return; } } };
-  const toward=(tx,tz)=>(x,z)=>Math.atan2(z-tz,x-tx)+Math.PI;
-  tryAt([[7.9,3.2],[8.2,6.4],[12.9,2.8],[13.0,6.9]],toward(VEH.car.x,VEH.car.z),['Concept car',['Open skateboard platform','Battery · e-axles · HV wiring','Hubless ring wheels'],'#3d8bff']);
-  tryAt([[4.9,6.2],[4.9,4.6],[1.0,6.0],[5.1,8.2]],toward(VEH.truck.x,VEH.truck.z-2.5),['Concept truck',['Open-frame cab structure','Battery packs · power module','Electric drive axles'],'#b04cff']);
-})();
+/* vehicle info stands removed on request (no standees) */
 /* ============================ Realism layer: props, skirting, ceilings & downlights, fascia, hall context ============================ */
 /* --- table-top props --- */
 const PM={ white:new THREE.MeshStandardMaterial({color:0xf6f5f2,roughness:.25}), lapBody:new THREE.MeshStandardMaterial({color:0x8d9198,roughness:.35,metalness:.6}),
@@ -1867,11 +1857,10 @@ const exCol=(x0,z0,x1,z1)=>EXTRA_COL0.push({x0,z0,x1,z1});
   box(1.8,.71,1.0,MATS.white,14.4,FY,18.26,g); box(1.83,.04,1.03,MATS.quartz,14.4,FY+.71,18.26,g); box(1.8,.08,.012,exMat(THEME.B.c),14.4,FY+.6,17.76,g);
   const car=buildConceptCar(); car.scale.setScalar(.16); car.position.set(14.4,FY+.75,18.2); shadowify(car); g.add(car);
   [13.55,14.17,14.79,15.41].forEach((x,i)=>wallScreen(g,.58,.33,x,1.3,18.73,'N',['Mini demo car','B-SDV','Architecture','Assets'][i],'BEG'));
-  const post=new THREE.Group(); post.position.set(13.3,FY,17.2); g.add(post); box(.6,1.5,.03,exMat(0xffffff),0,.05,0,post); box(.56,.25,.032,exMat(THEME.B.c),0,1.28,0,post); box(.3,.05,.3,VM.trim,0,0,0,post);
   headerSign(g,'B2','B-SDV architecture & assets','B',14.4,2.12,18.73,'N',1.3);
-  exCol(13.5,17.76,15.3,18.76); exCol(13.0,17.0,13.6,17.4); shadowify(g);
-  exReg('B2','B','B-SDV architecture & assets – mini demo car (BEG)',g,'table 1.8 × 1.0 m in a 3.0 × 2.5 m area','0.75 m table · 1 + 3 screens · poster stand',
-    'Bharat SDV architecture with the SDV mini demo car on a 1.8 × 1.0 m table, one screen for the car and three for the other BEG topics, plus a poster stand. The full 3 × 2.5 m area asked for in the list is available.');
+  exCol(13.5,17.76,15.3,18.76); shadowify(g);
+  exReg('B2','B','B-SDV architecture & assets – mini demo car (BEG)',g,'table 1.8 × 1.0 m in a 3.0 × 2.5 m area','0.75 m table · 1 + 3 screens',
+    'Bharat SDV architecture with the SDV mini demo car on a 1.8 × 1.0 m table, one screen for the car and three for the other BEG topics. (Optional poster stand left out.) The full 3 × 2.5 m area asked for in the list is available.');
   /* B4 – Samarth Bharat virtualization desk */
   const g4=new THREE.Group(); gEx.add(g4);
   box(1.6,.71,.8,MATS.white,17.2,FY,18.36,g4); box(1.63,.04,.83,MATS.quartz,17.2,FY+.71,18.36,g4); box(1.6,.08,.012,exMat(THEME.B.c),17.2,FY+.6,17.96,g4);
@@ -1891,10 +1880,9 @@ const exCol=(x0,z0,x1,z1)=>EXTRA_COL0.push({x0,z0,x1,z1});
   box(1.22,.87,.91,MATS.white,22.01,FY,18.06,g); box(1.25,.04,.94,MATS.quartz,22.01,FY+.87,18.06,g); box(1.22,.08,.012,exMat(THEME.S.c),22.01,FY+.74,17.6,g);
   prod(g,'laptop',21.8,FY+.91,18.0,1,0); prod(g,'box',22.3,FY+.91,18.1,.8);
   wallScreen(g,1.0,.56,21.55,1.3,18.73,'N','SafeSphere','Accident lifecycle'); wallScreen(g,1.0,.56,22.6,1.3,18.73,'N','EDR · CDR','BNCAP 3.0');
-  const st=new THREE.Group(); st.position.set(21.2,FY,17.45); st.rotation.y=.3; g.add(st); box(.61,1.52,.03,exMat(0xffffff),0,.05,0,st); box(.57,.3,.032,exMat(THEME.S.c),0,1.22,0,st); box(.32,.05,.3,VM.trim,0,0,0,st);
   headerSign(g,'S1','SafeSphere + accident lifecycle','S',22.07,2.12,18.73,'N',1.3);
-  exCol(21.4,17.6,22.62,18.51); exCol(20.9,17.25,21.5,17.65); shadowify(g);
-  exReg('S1','S','SafeSphere + accident lifecycle management (EDR, CDR, BNCAP 3.0)',g,'table 4 × 3 × 3 ft (1.22 × 0.91 × 0.91 m) in 6 × 5 ft area','0.91 m table · 2 TVs · standee 2 × 5 ft',
+  exCol(21.4,17.6,22.62,18.51); shadowify(g);
+  exReg('S1','S','SafeSphere + accident lifecycle management (EDR, CDR, BNCAP 3.0)',g,'table 4 × 3 × 3 ft (1.22 × 0.91 × 0.91 m) in 6 × 5 ft area','0.91 m table · 2 TVs',
     'Two rows of the list combined: PA-CS SafeSphere and accident lifecycle management (EDR, CDR, BNCAP 3.0 / SafeSphere). Needs at least 4 power points and internet. Sizes from the list.');
   /* S2 – Cybersecurity */
   const g2=new THREE.Group(); gEx.add(g2);
@@ -2102,11 +2090,11 @@ function updateSelBox(t){ if(!S.sel)return; selBox.box.copy(selBounds(byId[S.sel
 /* ============================ Renderer sizing & quality ============================ */
 function resize(){
   const w=innerWidth,h=innerHeight, dpr=devicePixelRatio||1;
-  const base={1:Math.min(dpr,1.25),2:Math.min(Math.max(dpr,1.5)*1.25,3),3:Math.min(Math.max(dpr,2)*1.5,4)}[S.quality];
-  const maxPx={1:4e6,2:9e6,3:2.2e7}[S.quality], pr=Math.min(base,Math.sqrt(maxPx/(w*h)));
+  const base={1:Math.min(dpr,1),2:Math.min(dpr,1.5),3:Math.min(Math.max(dpr,2)*1.25,3)}[S.quality];
+  const maxPx={1:2.2e6,2:3.6e6,3:1.2e7}[S.quality], pr=Math.min(base,Math.sqrt(maxPx/(w*h)));
   renderer.setPixelRatio(pr); renderer.setSize(w,h,false); camera.aspect=w/h; camera.updateProjectionMatrix(); viewOffset();
-  if(composer){ composer.setPixelRatio(Math.min(pr,S.quality>2?2:1.5)); composer.setSize(w,h); }
-  const ss=S.quality===1?2048:4096; if(sun.shadow.mapSize.x!==ss){ sun.shadow.map?.dispose(); sun.shadow.map=null; sun.shadow.mapSize.set(ss,ss); }
+  if(composer){ composer.setPixelRatio(Math.min(pr,S.quality>2?1.5:1)); composer.setSize(w,h); }
+  const ss=S.quality===3?4096:2048; if(sun.shadow.mapSize.x!==ss){ sun.shadow.map?.dispose(); sun.shadow.map=null; sun.shadow.mapSize.set(ss,ss); }
 }
 addEventListener('resize',resize);
 /* keep the model centred in the free space between the side panels */
@@ -2136,7 +2124,7 @@ const DIMLBL=[];
 
 /* ============================ Visibility ============================ */
 const chk=id=>$('#'+id).checked;
-function applyVisibility(){
+function applyVisibility(){ renderer.shadowMap.needsUpdate=true;
   G0.visible=chk('tG'); G1.visible=chk('tM')&&!S.autoHideM;
   roof.visible=chk('tRoof')||S.mode==='walk';
   furnGroups.forEach(g=>g.visible=chk('tFurn')); PEOPLE_GROUPS.forEach(g=>g.visible=chk('tVis')); gRig.visible=chk('tRig'); gHall.visible=chk('tHall'); scene.fog=chk('tHall')?HALL_FOG:null; SPOTS.forEach(l=>l.visible=chk('tRig')); zoneGroups.forEach(g=>g.visible=chk('tZone'));
@@ -2410,12 +2398,20 @@ function updateCompass(){ _R.setFromMatrixColumn(camera.matrixWorld,0); _U.setFr
   const a=Math.atan2(-_R.z,-_U.z); compSvg.style.transform=`rotate(${(a*180/Math.PI).toFixed(1)}deg)`; }
 
 /* ============================ Main loop ============================ */
-let last=performance.now(), T=0, fr=0;
+let last=performance.now(), T=0, fr=0, busyT=0, perfN=0, perfT=0, perfDone=false;
+['pointerdown','wheel'].forEach(ev=>canvas.addEventListener(ev,()=>{ busyT=performance.now(); },{passive:true}));
+canvas.addEventListener('pointermove',()=>{ if(ptrs.size) busyT=performance.now(); },{passive:true});
+window.addEventListener('keydown',()=>{ busyT=performance.now(); });
+renderer.shadowMap.autoUpdate=false; renderer.shadowMap.needsUpdate=true;
 function frame(now){
   requestAnimationFrame(frame); const dt=clamp((now-last)/1000,0,.05); last=now; T+=dt; fr++;
   const dd=S.explodeT-S.explode; if(Math.abs(dd)>.004) setExplode(Math.abs(dd)<.02?S.explodeT:S.explode+dd*Math.min(1,dt*4));
   if(S.mode==='walk'){ walkStep(dt); fillRange($('#plS')); } else camStep(dt);
   updatePaths(dt,chk('tVis')); updateSelBox(T);
+  S.fast=(now-busyT<350)||S.mode==='walk'||S.auto||!!fly||Math.abs(dd)>.004;
+  if(fr%6===0||Math.abs(dd)>.004) renderer.shadowMap.needsUpdate=true;
+  /* if the device is slow, drop to Std quality once (the user can switch back in Display) */
+  if(!perfDone&&fr>30){ perfN++; perfT+=dt; if(perfN>=120){ perfDone=true; if(perfT/perfN>1/32&&S.quality>1){ S.quality=1; $$('#qual button').forEach(b=>b.classList.toggle('on',b.dataset.v==='1')); resize(); toast('Switched to Std quality for smoother motion'); } } }
   renderFrame(); updateLabels(); updateCompass();
   if(fr%20===0) $$('input[type=range]').forEach(fillRange);
 }
