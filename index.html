@@ -1977,6 +1977,45 @@ const exCol=(x0,z0,x1,z1)=>EXTRA_COL0.push({x0,z0,x1,z1});
   P(25.45,5.35,0,'talk','staff',.2); P(25.2,6.0,0,'stand','exec',-.2); P(20.85,9.3,Math.PI,'point','exec',0); P(23.15,10.6,0,'stand','exec',.1);
   P(23.75,14.3,Math.PI,'talk','staff',.3); P(22.9,15.1,0,'stand','exec',0); P(22.85,15.7,0,'folded','visitor',-.1);
 })();
+/* ============================ Performance: merge static meshes ============================
+   Every small box of the fit-out was its own draw call (and drawn again for shadows and ambient occlusion).
+   Here the static groups are merged: one mesh per material per registered element, and one line set for
+   their edge outlines. Picking, selection outlines and the element cards keep working. */
+(function(){
+  const tmpM=new THREE.Matrix4();
+  function toLocal(o,target){ o.updateMatrixWorld(true); target.updateMatrixWorld(true); return tmpM.copy(target.matrixWorld).invert().multiply(o.matrixWorld).clone(); }
+  function mergeGeos(list,withNormals){ // list of [geometry, matrix]
+    let n=0; const geos=list.map(([g,m])=>{ const ng=(g.index?g.toNonIndexed():g.clone()); ng.applyMatrix4(m); n+=ng.attributes.position.count; return ng; });
+    const hasUV=geos.every(g=>g.attributes.uv), pos=new Float32Array(n*3), nor=withNormals?new Float32Array(n*3):null, uv=hasUV?new Float32Array(n*2):null; let o=0;
+    geos.forEach(g=>{ const c=g.attributes.position.count; pos.set(g.attributes.position.array.subarray(0,c*3),o*3);
+      if(nor&&g.attributes.normal) nor.set(g.attributes.normal.array.subarray(0,c*3),o*3); if(uv) uv.set(g.attributes.uv.array.subarray(0,c*2),o*2); o+=c; g.dispose(); });
+    const out=new THREE.BufferGeometry(); out.setAttribute('position',new THREE.BufferAttribute(pos,3)); if(nor) out.setAttribute('normal',new THREE.BufferAttribute(nor,3)); if(uv) out.setAttribute('uv',new THREE.BufferAttribute(uv,2));
+    out.computeBoundingSphere(); out.computeBoundingBox(); return out; }
+  const owner=new Map(); ELS.forEach(d=>d.obj.traverse(o=>{ if(o.isMesh) owner.set(o,d); }));
+  const dead=new Set(), born=[];
+  function mergeInto(target,meshes){
+    const buckets=new Map(), lines=new Map();
+    meshes.forEach(m=>{ const k=m.material.uuid+'|'+(m.castShadow?1:0)+(m.receiveShadow?1:0); if(!buckets.has(k)) buckets.set(k,{mat:m.material,cs:m.castShadow,rs:m.receiveShadow,items:[]});
+      const M=toLocal(m,target); buckets.get(k).items.push([m.geometry,M]);
+      m.children.forEach(c=>{ if(c.isLineSegments){ const lk=c.material.uuid; if(!lines.has(lk)) lines.set(lk,{mat:c.material,items:[]}); lines.get(lk).items.push([c.geometry,toLocal(c,target)]); } });
+      dead.add(m); });
+    buckets.forEach(b=>{ const g=mergeGeos(b.items,true), mesh=new THREE.Mesh(g,b.mat); mesh.castShadow=b.cs; mesh.receiveShadow=b.rs; target.add(mesh); born.push([mesh,target]); });
+    lines.forEach(b=>{ const l=new THREE.LineSegments(mergeGeos(b.items,false),b.mat); l.raycast=()=>{}; l.renderOrder=1; target.add(l); });
+  }
+  const eligible=m=>m.isMesh&&!m.isInstancedMesh&&!m.isSkinnedMesh&&!Array.isArray(m.material)&&!m.material.transparent&&!m.userData.noAO&&!m.userData.noMerge&&m.renderOrder===0&&m.visible&&m.children.every(c=>c.isLineSegments);
+  function optimize(root){
+    /* registered elements inside this root, deepest first, each merged into its own group */
+    const els=ELS.filter(d=>{ let o=d.obj; while(o){ if(o===root) return true; o=o.parent; } return false; })
+      .map(d=>{ let k=0,o=d.obj; while(o){k++;o=o.parent;} return [k,d]; }).sort((a,b)=>b[0]-a[0]).map(x=>x[1]);
+    els.forEach(d=>{ const ms=[]; d.obj.traverse(o=>{ if(eligible(o)&&!dead.has(o)&&owner.get(o)===d) ms.push(o); }); if(ms.length>1) mergeInto(d.obj,ms); });
+    const rest=[]; root.traverse(o=>{ if(eligible(o)&&!dead.has(o)&&!owner.has(o)) rest.push(o); }); if(rest.length>1) mergeInto(root,rest);
+  }
+  [gEx,...furnGroups.filter(g=>g!==gEx),...wallGroups].forEach(optimize);
+  dead.forEach(m=>{ m.parent&&m.parent.remove(m); });
+  /* keep picking working */
+  for(let i=pickables.length-1;i>=0;i--) if(dead.has(pickables[i])) pickables.splice(i,1);
+  born.forEach(([m,t])=>{ let o=t, d=null; while(o&&!d){ d=ELS.find(e=>e.obj===o)||null; o=o.parent; } if(d){ m.userData.el=d.id; pickables.push(m); } });
+})();
 /* ============================ App state ============================ */
 const S={mode:'orbit',sel:null,autoHideM:false,explode:0,explodeT:0,quality:2,labels:'key',walls:'solid',auto:false,clip:false};
 const clipPlane=new THREE.Plane(new THREE.Vector3(0,-1,0),1.4);
