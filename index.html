@@ -1420,23 +1420,23 @@ const SEG={
 /* Research-room tours: the one-way visitor loop drawn on the plan (in at the south half of the door, out at the north half).
    Profile tours walk the same loop and stop only at their stations. */
 const STOPS_T=[];
-const TN={DOOR:[12.2,14.1],A:[13.5,14.14],B:[16.97,14.14],C:[16.97,16.47],E:[22.36,7.76],G:[21.4,5.22],H:[21.4,12.73],X1:[16.0,12.73],DO:[13.6,12.76],EXIT:[12.2,12.8]};
-const TV={'1':[14.6,14.14,'AI-powered cockpit'],L:[16.97,15.3,'Launch area'],'2':[18.0,16.47,'pHUD'],'3':[20.8,16.47,'Gaming on wheels'],'4':[22.36,16.47,'Frictionless payment'],
-  '7':[22.36,15.95,'Advanced VMM'],'6':[22.36,15.4,'ADAS CV'],'8':[22.36,14.3,'Accident research India'],'5':[22.36,13.75,'Scalable ADAS'],'9':[22.36,10.5,'V2X demonstrator'],
-  '10':[24.55,7.76,'Suspension control'],'11':[24.55,6.4,'EM · X-in-1'],'13':[24.55,5.22,'Core compute'],'15':[23.3,5.22,'Semiconductors & sensors'],'14':[22.2,5.22,'Virtualization'],
-  '17':[21.4,5.6,'Micrologix'],'18':[21.4,7.05,'X domain & gateway'],'19':[21.4,8.6,'Powertrain ICE 2W'],'20':[21.4,10.7,'Electrification 3W']};
-const STORY=['DOOR','A','1','B','L','C','2','3','4','7','6','8','5','9','E','10','11','13','15','14','G','17','18','19','20','H','X1','DO','EXIT'];
+const TN={DOOR:[12.2,14.1],A:[13.6,14.1],B:[15.07,14.1],C:[15.07,16.67],D:[22.35,16.67],E:[22.35,8.55],H0:[20.64,12.3],H:[20.4,12.9],H2:[19.0,12.9],X1:[16.0,12.9],DO:[13.6,12.9],EXIT:[12.2,12.9]};
+const TV={'1':[15.07,15.6,'AI-powered cockpit'],'2':[18.0,16.67,'pHUD'],'3':[20.67,16.67,'Gaming on wheels'],'4':[21.7,16.67,'Frictionless payment'],
+  '7':[22.35,16.2,'Scalable ADAS'],'8':[22.35,15.68,'Advanced VMM'],'6':[22.35,15.1,'ADAS CV · manoeuvring'],'9':[22.35,14.4,'Accident research India'],'5':[22.35,13.8,'ADAS CV · driving'],
+  '10':[22.35,10.56,'V2X demonstrator'],'11':[24.63,8.55,'Suspension control'],'12':[24.63,6.62,'3/X-in-1 · CCON · DINV'],'15':[24.63,4.77,'Semiconductors & sensors'],
+  '13':[23.6,4.77,'Core compute · HPC cockpit'],'14':[22.9,4.77,'Virtualization'],'16':[21.36,4.77,'S score + Google SDV'],'17':[20.64,4.77,'Micrologix'],'18':[20.64,9.42,'2W gateway & powertrain']};
+const STORY=['DOOR','A','B','1','C','2','3','4','D','7','8','6','9','5','10','E','11','12','15','13','14','16','17','18','H0','H','H2','X1','DO','EXIT'];
 const tourPick=set=>STORY.map(n=>!TV[n]||set.includes(n)?n:'~'+n);   // skipped stations stay on the path (walked past), they are just not stops
 const TOURS=[
  ['r1','Full visitor loop · all stations','#0f9d9a',STORY],
- ['r2','Passenger-car OEM','#2f6fed',tourPick(['1','L','2','4','7','6','8','5','9','13','15'])],
- ['r3','SDV & E/E architecture','#7a5c8e',tourPick(['1','L','4','13','14','15','17','18'])],
- ['r4','2W / 3W OEM · Bharat','#e8772e',tourPick(['L','14','17','18','19','20','11'])],
- ['r5','Commercial vehicle & off-highway','#3f8f5a',tourPick(['L','6','8','9','10','11','13'])],
+ ['r2','Passenger-car OEM','#2f6fed',tourPick(['1','2','4','7','8','6','9','5','10','13','15'])],
+ ['r3','SDV & E/E architecture','#7a5c8e',tourPick(['1','4','13','14','15','16','17'])],
+ ['r4','2W / 3W OEM · Bharat','#e8772e',tourPick(['3','14','17','18','12'])],
+ ['r5','Commercial vehicle & off-highway','#3f8f5a',tourPick(['6','9','10','11','12','13'])],
 ];
 const TOUR={sel:'r1'};
 TOURS.forEach(([k,name,css,seq])=>{ SEG[k]={css,hex:parseInt(css.slice(1),16),name,tour:true,pts:PP(seq.map(n=>(TN[n]||TV[n.replace('~','')]).slice(0,2)))};
-  let i=0; seq.forEach(n=>{ if(TV[n]) STOPS_T.push({seg:k,n:n,t:`${n} · ${TV[n][2]}`,p:P(TV[n][0],TV[n][1]),tag:'',tour:true}); });
+  let i=0; seq.forEach(n=>{ if(TV[n]) STOPS_T.push({seg:k,n:n,t:TV[n][2],p:P(TV[n][0],TV[n][1]),tag:'',tour:true}); });
   });
 const ROUTES={pub:['pub'],oemA:['oemMain','oemA'],oemB:['oemMain','oemB'],r1:['r1'],r2:['r2'],r3:['r3'],r4:['r4'],r5:['r5']};
 const STOPS=[
@@ -1759,8 +1759,8 @@ const gHall=new THREE.Group(); root.add(gHall);
     shadowify(g); }
 })();
 const HALL_FOG=new THREE.Fog(0xeceae6,60,140); scene.fog=HALL_FOG;
-/* ============================ Research room exhibits (layout "Group 401", 24 Nov 2026) ============================
-   Numbered stations 1–20 as on the drawing (there is no 12 or 16), plus the launch area (L). Each station has a coloured
+/* ============================ Research room exhibits (layout "Research room layout 1", 25 Nov 2026) ============================
+   Numbered stations 1–18 as on the drawing, each on Bosch exhibit tables at the sizes written on the plan. Each station has a coloured
    floor inlay with a solid border and a floor number plate on its visitor side.
    Positions measured from the drawing; sizes from the exhibit list where given, otherwise taken from the drawing. */
 const THEME={X:{c:0x1c1f24,css:'#1c1f24',n:'Launch'},B:{c:0xe8772e,css:'#e8772e',n:'Bharat'},A:{c:0x2f6fed,css:'#2f6fed',n:'ADAS'},
@@ -1799,10 +1799,27 @@ function signPanel(code,title,t,w=.9,h=.2){ const c=document.createElement('canv
 /* face: direction the station faces (visitor side) as a unit vector name: 'N','S','E','W' */
 const FACE={N:[0,-1],S:[0,1],E:[1,0],W:[-1,0]};
 const ROT={N:Math.PI,S:0,E:Math.PI/2,W:-Math.PI/2};   // rotation so local +z points to the visitor side
+/* Bosch exhibit table (look from the reference photo): matt white two-door cabinet on a recessed plinth, a deep top band
+   with a framed top, and the Bosch armature + red wordmark on the band at the visitor's right. Size = footprint from the plan. */
+const BT={ body:new THREE.MeshStandardMaterial({color:0xf2f1ed,roughness:.55}), band:new THREE.MeshStandardMaterial({color:0xf7f6f3,roughness:.45}),
+  top:new THREE.MeshStandardMaterial({color:0xfbfaf8,roughness:.35}), gap:new THREE.MeshStandardMaterial({color:0x9a9a96,roughness:.7}), plinth:new THREE.MeshStandardMaterial({color:0xd9d8d4,roughness:.7}) };
+const BOSCH_LOGO=(()=>{ const c=document.createElement('canvas'); c.width=512; c.height=96; const x=c.getContext('2d');
+  x.strokeStyle='#1a1a1a'; x.lineWidth=5; x.beginPath(); x.arc(48,48,36,0,7); x.stroke(); x.beginPath(); x.arc(48,48,27,0,7); x.stroke();
+  x.lineWidth=6; x.beginPath(); x.moveTo(36,24); x.lineTo(36,72); x.moveTo(60,24); x.lineTo(60,72); x.moveTo(36,48); x.lineTo(60,48); x.stroke();
+  x.fillStyle='#e20015'; x.font='800 66px Arial,Helvetica,sans-serif'; x.textBaseline='middle'; x.fillText('BOSCH',100,52);
+  const t=new THREE.CanvasTexture(c); t.colorSpace=THREE.SRGBColorSpace; t.anisotropy=8;
+  return new THREE.MeshStandardMaterial({map:t,transparent:true,roughness:.5}); })();
 function counter(par,x0,z0,x1,z1,h,t,face){
-  const w=x1-x0,d=z1-z0,cx=(x0+x1)/2,cz=(z0+z1)/2;
-  box(w,h-.04,d,MATS.white,cx,FY,cz,par); box(w+.03,.04,d+.03,MATS.quartz,cx,FY+h-.04,cz,par); box(w-.02,.07,d-.02,MATS.dark,cx,FY,cz,par);
-  const [fx,fz]=FACE[face], band=box(fx?.012:w,.09,fz?.012:d,exMat(THEME[t].c,{r:.4}),cx+fx*(w/2+.006),FY+h-.17,cz+fz*(d/2+.006),par); return FY+h; }
+  const cx=(x0+x1)/2, cz=(z0+z1)/2, g=new THREE.Group(); g.position.set(cx,FY,cz); g.rotation.y=ROT[face]; par.add(g);
+  const ns=face==='N'||face==='S', W=ns?x1-x0:z1-z0, D=ns?z1-z0:x1-x0, BH=Math.min(.13,h*.16);   // W along the visitor face, D away from it
+  box(W-.06,.07,D-.06,BT.plinth,0,0,0,g);                                     // recessed plinth
+  box(W-.02,h-BH-.07,D-.02,BT.body,0,.07,0,g);                                 // cabinet
+  box(W,BH,D,BT.band,0,h-BH,0,g);                                              // top band
+  box(W-.05,.006,D-.05,BT.top,0,h-.004,0,g);                                   // framed top panel
+  box(.006,h-BH-.11,.004,BT.gap,0,.09,D/2-.008,g);                             // door split
+  box(W-.04,.004,.004,BT.gap,0,h-BH-.006,D/2-.008,g);                          // shadow gap under the band
+  if(W>.6){ const lw=Math.min(.36,W*.4), lg=new THREE.Mesh(new THREE.PlaneGeometry(lw,lw*96/512),BOSCH_LOGO); lg.position.set(W/2-lw/2-.05,h-BH/2,D/2+.002); lg.userData.noAO=true; g.add(lg); }
+  return FY+h; }
 function wallScreen(par,w,h,x,y,z,face,title,sub){ return screen(par,w,h,x,y+h/2+.03,z,ROT[face],title,sub); }
 function headerSign(par,code,title,t,x,y,z,face,w=1.0){ const m=new THREE.Mesh(new THREE.PlaneGeometry(w,w*.2),signPanel(code,title,t,w,w*.2)); m.position.set(x,y,z); m.rotation.y=ROT[face]; m.userData.noAO=true; par.add(m); return m; }
 function prod(par,kind,x,y,z,s=1,rot=0){ const g=new THREE.Group(); g.position.set(x,y,z); g.rotation.y=rot; g.scale.setScalar(s); par.add(g);
@@ -1833,139 +1850,139 @@ const miniCar=(g,x,y,z,s,rot=0)=>{ const c=buildConceptCar(); c.scale.setScalar(
 const RRW=13.12, RRE=24.23, RRS=18.76, WGN=3.24, PKE=26.77;   // research-room walls: west, hall east, south, wing north, pocket east
 
 /* ---------------- main hall ---------------- */
-/* 1 · AI-powered cockpit (HPC cockpit) – 10 × 10 ft walk-in enclosure in the south-west corner, open to the north (towards the door) */
-station('1','C','AI-powered cockpit – HPC cockpit',13.15,15.22,16.2,18.27,'enclosure ≈ 3.05 × 3.05 m (10 × 10 ft)','2.3 m panels (research-room ceiling 2.35 m)',
-  'Station 1, the first stop after the door: a walk-in cockpit simulator for the HPC cockpit. The enclosure is open on the north side, towards the entry, with a seat facing a wrap-round screen on the west wall. A wall screen on the inside of the east panel runs the demo for people waiting.',
-  g=>{ const pan=exMat(0x24272c,{r:.6}), H=2.3, x0=13.15,z0=15.22,x1=16.2,z1=18.27, zc=(z0+z1)/2;
-    box(.06,H,z1-z0,pan,x1-.03,FY,zc,g); box(x1-x0,H,.06,pan,(x0+x1)/2,FY,z1-.03,g); box(x1-x0,.06,z1-z0,pan,(x0+x1)/2,FY+H-.06,zc,g);
-    box(.06,H,z1-z0,pan,x0+.03,FY,zc,g);
-    for(const x of [x0+.04,x1-.04]) box(.08,H,.08,exMat(THEME.C.c),x,FY,z0+.04,g);
-    box(x1-x0,.1,.065,exMat(THEME.C.c,{e:THEME.C.c,ei:.6}),(x0+x1)/2,FY+H-.25,z0,g);
-    const seat=new THREE.Group(); seat.position.set(14.75,FY,16.75); seat.rotation.y=-Math.PI/2; g.add(seat);   // faces west
-    box(.55,.45,.55,VM.satin,0,0,0,seat); const bk=box(.55,.7,.12,VM.satin,0,.45,-.24,seat); bk.rotation.x=-.2;
-    box(.12,.12,.9,VM.trim,14.05,FY+.75,16.75,g); cyl(.17,.04,VM.trim,14.25,FY+.95,16.75,g,24,0,Math.PI/2.6);
-    const wrap=new THREE.Mesh(new THREE.CylinderGeometry(1.2,1.2,1.0,32,1,true,-Math.PI*.35,Math.PI*.7),new THREE.MeshStandardMaterial({color:0x0b1220,emissive:0x1f7f86,emissiveIntensity:.9,side:THREE.DoubleSide}));
-    wrap.position.set(14.75,FY+1.25,16.75); wrap.rotation.y=-Math.PI/2; wrap.userData.noAO=true; g.add(wrap);
-    screenOn(g,1.2,.68,x1-.07,1.5,16.2,-Math.PI/2,'AI cockpit','HPC cockpit');
-    headerSign(g,'1','AI-powered cockpit · HPC','C',(x0+x1)/2,2.05,z0-.04,'N',1.6); },
-  {cols:[[16.14,15.22,16.2,18.27],[13.15,18.21,16.2,18.27],[13.15,15.22,13.21,18.27],[14.0,16.3,15.05,17.2]],zone:[13.12,14.75,16.55,18.74],face:'N',key:true,ay:2.7,ax:14.7,az:15.0});
-/* L · Launch area – open floor in front of the LED wall on the spine */
-station('L','X','Launch area',16.6,13.55,19.1,16.1,'open floor ≈ 2.5 × 2.5 m · LED wall ≈ 2.6 m on the spine behind it','LED wall 2.1 m',
-  'The launch area from the drawing: an open floor in front of a free-standing spine whose west face carries an LED wall. Kept clear for unveilings and short talks; the walking route runs along its north and west sides. What is launched here is to be confirmed.',
-  g=>{ box(.14,2.2,2.67,exMat(0x1c1f24,{r:.5}),19.3,FY,14.785,g);
-    const t=screenTex('Launch area','BMGE 2027'), led=new THREE.Mesh(new THREE.PlaneGeometry(2.5,1.4),new THREE.MeshStandardMaterial({map:t,emissiveMap:t,emissive:0xffffff,emissiveIntensity:.85,roughness:.3}));
-    led.position.set(19.225,FY+1.3,14.785); led.rotation.y=-Math.PI/2; led.userData.noAO=true; g.add(led);
-    const disc=new THREE.Mesh(new THREE.CircleGeometry(.95,48).rotateX(-Math.PI/2),new THREE.MeshStandardMaterial({color:0x1c1f24,roughness:.35,metalness:.2}));
-    disc.position.set(17.9,FY+.012,14.85); disc.userData.noAO=true; disc.renderOrder=2; g.add(disc);
-    const ring=new THREE.Mesh(new THREE.RingGeometry(.95,1.0,64).rotateX(-Math.PI/2),new THREE.MeshBasicMaterial({color:0xe8772e}));
-    ring.position.set(17.9,FY+.014,14.85); ring.renderOrder=2; g.add(ring);
-    headerSign(g,'L','Launch area','X',19.22,2.2,14.785,'W',1.1); },
-  {cols:[[19.22,13.45,19.38,16.12]],zone:[16.6,13.55,19.22,16.1],face:'W',ay:2.6,ax:17.9,az:14.85,key:true});
-/* 5 · Scalable ADAS software solutions and 6 · ADAS CV – on the east face of the spine */
-station('5','A','Scalable ADAS software solutions',19.38,13.6,19.92,14.95,'counter ≈ 0.55 × 1.35 m · 1 screen on the spine','0.9 m counter · screen at 1.15–1.75 m',
-  'Station 5: scalable ADAS software solutions, on a counter against the east face of the spine with a screen above. Viewed from the walking lane to the east.',
-  g=>{ const h=counter(g,19.38,13.6,19.92,14.95,.86,'A','E'); prod(g,'ecu',19.65,h,14.0,1,Math.PI/2); prod(g,'laptop',19.66,h,14.55,1,-Math.PI/2);
-    screenOn(g,1.15,.65,19.41,1.55,14.27,Math.PI/2,'Scalable ADAS','Software solutions'); headerSign(g,'5','Scalable ADAS software','A',19.41,2.12,14.27,'E',1.15); },
-  {zone:[19.38,13.45,20.55,14.97],face:'E',ay:2.5});
-station('6','A','ADAS CV – perception and driving',19.38,15.0,19.92,16.12,'counter ≈ 0.55 × 1.1 m · 1 screen on the spine','0.9 m counter · screen at 1.15–1.75 m',
-  'Station 6: ADAS computer vision – perception and driving – with radar and camera hardware on a counter and a screen on the spine.',
-  g=>{ const h=counter(g,19.38,15.0,19.92,16.12,.86,'A','E'); prod(g,'radar',19.62,h,15.3,1.3,Math.PI/2); prod(g,'camera',19.62,h,15.8,1.3,Math.PI/2);
-    screenOn(g,1.0,.56,19.41,1.55,15.56,Math.PI/2,'ADAS CV','Perception & driving'); headerSign(g,'6','ADAS CV · perception','A',19.41,2.12,15.56,'E',1.0); },
-  {zone:[19.38,14.99,20.55,16.12],face:'E',ay:2.5});
-/* 2 · pHUD (next to the AI cockpit) – table-top demo 5 × 3 × 5 ft against the south wall */
-station('2','C','pHUD – next-generation cockpit (table-top demo)',17.23,17.84,18.75,RRS,'table-top demo 5 × 3 × 5 ft (1.52 × 0.91 × 1.52 m) · 1 TV','1.52 m demo unit · TV above',
-  'Station 2, placed next to the AI-powered cockpit as the drawing asks: the pHUD table-top demo for the next-generation cockpit, a 5 × 3 × 5 ft unit against the south wall with a TV above it.',
-  g=>{ const cx=17.99, cz=18.3; box(1.52,1.0,.91,exMat(0xf1efeb,{r:.4}),cx,FY,cz,g); box(1.54,.04,.93,MATS.quartz,cx,FY+1.0,cz,g); box(1.52,.09,.012,exMat(THEME.C.c),cx,FY+.85,17.84,g);
-    box(1.2,.5,.6,exMat(0x1c1f24,{r:.5}),cx,FY+1.04,18.45,g);
-    const glass=new THREE.Mesh(new THREE.PlaneGeometry(1.0,.38),new THREE.MeshStandardMaterial({color:0x9fd4ff,transparent:true,opacity:.35,emissive:0x4ab0ff,emissiveIntensity:.5,side:THREE.DoubleSide}));
-    glass.position.set(cx,FY+1.32,18.05); glass.rotation.x=-.5; glass.userData.noAO=true; g.add(glass);
-    screenOn(g,1.0,.56,cx,1.98,RRS-.04,Math.PI,'pHUD','Next-gen cockpit'); headerSign(g,'2','pHUD · next-gen cockpit','C',cx,FY+1.17,17.83,'N',.95); },
-  {zone:[17.05,17.25,18.95,18.74],face:'N',ay:2.65});
-/* 3 · Gaming on wheels – driving-game table, racing seat and a wide screen on the south wall */
-station('3','C','Gaming on wheels',20.24,17.84,21.4,RRS,'table ≈ 1.16 × 0.92 m · racing seat · wide wall screen ≈ 2.6 m','0.8 m table · screen at 1.2–1.95 m',
-  'Station 3: in-car gaming. A steering-wheel rig on a table against the south wall, a racing seat in front of it and a wide screen on the wall, as the long bar on the drawing shows. Seat and screen size are assumed.',
-  g=>{ const h=counter(g,20.24,17.84,21.4,RRS,.78,'C','N'); box(.5,.1,.3,VM.trim,20.82,h,18.15,g); cyl(.16,.035,VM.trim,20.82,h+.2,18.02,g,24,Math.PI/2.4,0);
-    const st=new THREE.Group(); st.position.set(20.82,FY,17.3); st.rotation.y=Math.PI; g.add(st);
-    box(.56,.36,.6,VM.satin,0,0,0,st); const sb=box(.56,.75,.14,exMat(0xc8463c,{r:.45}),0,.36,-.26,st); sb.rotation.x=-.25; box(.56,.08,.56,exMat(0xc8463c,{r:.45}),0,.36,0,st);
-    screenOn(g,2.6,.73,20.82,1.58,RRS-.04,Math.PI,'Gaming on wheels','In-car entertainment'); headerSign(g,'3','Gaming on wheels','C',20.82,2.17,RRS-.02,'N',1.2); },
-  {cols:[[20.24,17.84,21.4,RRS],[20.5,16.98,21.14,17.62]],zone:[19.4,16.9,22.3,18.74],face:'N',ay:2.6});
-/* 4 · Frictionless payment (B-SDV) – counter against the south wall, east end */
-station('4','C','Frictionless payment (B-SDV)',22.9,17.84,RRE,RRS,'counter ≈ 1.33 × 0.92 m · 1 wall screen','0.9 m counter · screen at 1.15–1.85 m',
-  'Station 4: frictionless in-car payment on the Bosch SDV platform – a payment terminal and the SDV mini demo car on a counter in the south-east corner, with a screen on the wall.',
-  g=>{ const h=counter(g,22.9,17.84,RRE,RRS,.86,'C','N'); miniCar(g,23.3,h,18.3,.13,0);
-    box(.1,.16,.08,VM.trim,23.9,h,18.25,g); const sc=box(.09,.06,.005,exMat(0x0b1220,{e:0x2c4f7a,ei:.9}),23.9,h+.09,18.2,g);
-    screenOn(g,1.2,.68,23.56,1.62,RRS-.04,Math.PI,'Frictionless payment','B-SDV'); headerSign(g,'4','Frictionless payment','C',23.56,2.17,RRS-.02,'N',1.2); },
-  {zone:[22.75,17.25,24.21,18.74],face:'N',ay:2.6});
-/* 7 · Advanced VMM and 8 · Accident research India – east wall of the hall */
-station('7','S','Advanced VMM – vehicle motion management',23.4,15.34,RRE,16.84,'counter ≈ 0.8 × 1.5 m · 1 wall screen','0.9 m counter · screen at 1.15–1.85 m',
-  'Station 7: advanced vehicle motion management, on a counter against the east wall with a screen above it.',
-  g=>{ const h=counter(g,23.4,15.34,RRE,16.84,.86,'S','W'); prod(g,'ecu',23.8,h,15.75,1,Math.PI/2); prod(g,'shock',23.8,h,16.4,1.2);
-    screenOn(g,1.2,.68,RRE-.04,1.62,16.09,-Math.PI/2,'Advanced VMM','Vehicle motion'); headerSign(g,'7','Advanced VMM','S',RRE-.02,2.17,16.09,'W',1.1); },
-  {zone:[22.85,15.2,RRE,16.95],face:'W',ay:2.6});
-station('8','S','Accident research India',23.4,13.36,RRE,14.86,'counter ≈ 0.8 × 1.5 m · 1 wall screen','0.9 m counter · screen at 1.15–1.85 m',
-  'Station 8: accident research India – crash and accident-data findings on a counter against the east wall with a screen above it.',
-  g=>{ const h=counter(g,23.4,13.36,RRE,14.86,.86,'S','W'); prod(g,'laptop',23.8,h,13.8,1,-Math.PI/2); prod(g,'box',23.8,h,14.4,.8);
-    screenOn(g,1.2,.68,RRE-.04,1.62,14.11,-Math.PI/2,'Accident research','India'); headerSign(g,'8','Accident research India','S',RRE-.02,2.17,14.11,'W',1.3); },
-  {zone:[22.85,13.2,RRE,14.97],face:'W',ay:2.6});
+/* 1 · AI-powered cockpit – HPC cockpit: 304.8 × 304.8 × 152.4 cm (10 × 10 × 5 ft) in the south-west corner.
+   The visitor loop on the plan walks into it from the north and leaves to the east, so those sides stay open. */
+station('1','C','AI-powered cockpit – HPC cockpit',RRW,15.31,16.17,18.36,'304.8 × 304.8 cm (10 × 10 ft) footprint · 2 screens','152.4 cm (5 ft) low panels',
+  'Station 1, the first stop on the visitor loop: the AI-powered HPC cockpit. A 10 × 10 ft area with 5 ft (152.4 cm) high white panels on the south side and a short return on the east, open to the north and east because the walking route passes through it. Two white car seats face a large screen on the west wall; a second screen on the inside of the south panel mirrors the demo for people walking through.',
+  g=>{ const x0=RRW,z0=15.31,x1=16.17,z1=18.36, PH=1.524, pan=BT.body;
+    box(x1-x0,PH,.06,pan,(x0+x1)/2,FY,z1-.03,g); box(x1-x0+.02,.04,.08,BT.top,(x0+x1)/2,FY+PH,z1-.03,g);
+    box(.06,PH,.95,pan,x1-.03,FY,z1-.475,g); box(.08,.04,.97,BT.top,x1-.03,FY+PH,z1-.475,g);
+    box(x1-x0,.06,.012,exMat(THEME.C.c),(x0+x1)/2,FY+PH-.18,z1-.066,g);
+    const leather=exMat(0xf3f2ee,{r:.32}), stitch=exMat(0xd9d6cf,{r:.5});
+    for(const z of [16.4,17.24]){ const seat=new THREE.Group(); seat.position.set(14.3,FY,z); seat.rotation.y=-Math.PI/2; g.add(seat);   // faces west
+      box(.42,.26,.46,VM.trim,0,0,.02,seat);
+      const cu=rbox(.5,.12,.52,.05,leather); cu.position.set(0,.33,.04); cu.rotation.x=.08; seat.add(cu);
+      for(const sx of [-1,1]){ const bo=rbox(.08,.1,.5,.04,leather); bo.position.set(sx*.25,.39,.04); seat.add(bo); }
+      const bk=new THREE.Group(); bk.position.set(0,.36,-.22); bk.rotation.x=-.22; seat.add(bk);
+      const back=rbox(.5,.68,.13,.06,leather); back.position.set(0,.36,0); bk.add(back);
+      for(const sx of [-1,1]){ const wb=rbox(.08,.6,.16,.04,leather); wb.position.set(sx*.25,.34,.03); bk.add(wb); }
+      box(.003,.5,.11,stitch,0,.12,.066,bk);
+      const hr=rbox(.27,.2,.11,.05,leather); hr.position.set(0,.83,.0); bk.add(hr); for(const sx of [-1,1]) cyl(.008,.08,VM.alu,sx*.08,.7,0,bk,8); }
+    box(.12,.7,.12,VM.trim,13.72,FY,16.4,g); cyl(.17,.04,VM.trim,13.8,FY+.82,16.4,g,24,0,Math.PI/2.6);
+    screenOn(g,1.5,.85,RRW+.04,1.25,16.82,Math.PI/2,'AI-powered cockpit','HPC cockpit');
+    screenOn(g,1.2,.68,14.9,1.0,18.27,Math.PI,'AI-powered cockpit','Live demo view');   // second screen on the south panel, facing the walk-through
+    headerSign(g,'1','AI-powered cockpit · HPC','C',RRW+.02,2.05,16.82,'E',1.5); },
+  {cols:[[RRW,18.3,16.17,18.36],[16.11,17.41,16.17,18.36],[13.6,16.0,14.58,17.62],[13.62,16.25,13.84,16.55]],zone:[RRW,15.31,16.17,18.36],face:'N',key:true,ay:2.5,ax:14.6,az:15.6});
+/* spine with screens for stations 5 and 6 (white panel, screens on its east face) */
+(function(){ const g=new THREE.Group(); gEx.add(g); box(.12,2.1,2.92,BT.body,19.36,FY,14.88,g); box(.13,.06,2.92,exMat(THEME.A.c),19.36,FY+2.04,14.88,g); shadowify(g); exCol(19.3,13.42,19.42,16.34); })();
+/* 5 · ADAS CV – perception and driving (90 × 40 cm) and 6 · ADAS CV – perception and manoeuvring (90 × 40 cm) */
+station('5','A','ADAS CV – perception and driving',19.5,13.88,19.9,14.78,'90 × 40 cm table · screen on the spine','0.9 m table · screen at 1.15–1.75 m',
+  'Station 5: ADAS computer vision – perception and driving. A 90 × 40 cm Bosch table in front of the screen spine, viewed from the walking lane to the east.',
+  g=>{ const h=counter(g,19.5,13.88,19.9,14.78,.9,'A','E'); prod(g,'camera',19.7,h,14.15,1.2,Math.PI/2); prod(g,'radar',19.7,h,14.5,1.2,Math.PI/2);
+    screenOn(g,1.15,.65,19.43,1.55,14.33,Math.PI/2,'ADAS CV','Perception & driving'); headerSign(g,'5','ADAS CV · perception & driving','A',19.43,2.0,14.33,'E',1.15); },
+  {zone:[19.42,13.6,20.3,14.98],face:'E',ay:2.4});
+station('6','A','ADAS CV – perception and manoeuvring',19.5,15.13,19.9,16.03,'90 × 40 cm table · screen on the spine','0.9 m table · screen at 1.15–1.75 m',
+  'Station 6: ADAS computer vision – perception and manoeuvring (parking). A 90 × 40 cm Bosch table in front of the screen spine.',
+  g=>{ const h=counter(g,19.5,15.13,19.9,16.03,.9,'A','E'); prod(g,'camera',19.7,h,15.4,1.2,Math.PI/2); prod(g,'ecu',19.7,h,15.78,.8,Math.PI/2);
+    screenOn(g,1.15,.65,19.43,1.55,15.58,Math.PI/2,'ADAS CV','Perception & manoeuvring'); headerSign(g,'6','ADAS CV · manoeuvring','A',19.43,2.0,15.58,'E',1.15); },
+  {zone:[19.42,15.03,20.3,16.32],face:'E',ay:2.4});
+/* 2 · pHUD (150 × 90 cm), next to the AI cockpit, against the south wall */
+station('2','C','pHUD – next-generation cockpit (placed next to the AI-powered cockpit)',17.24,17.86,18.74,RRS,'150 × 90 cm table-top demo · 1 wall screen','1.0 m table + HUD hood · screen above',
+  'Station 2, placed next to the AI-powered cockpit as the plan asks: the pHUD demo on a 150 × 90 cm Bosch table against the south wall, with a HUD hood and combiner glass on top and a screen on the wall above.',
+  g=>{ const cx=17.99, h=counter(g,17.24,17.86,18.74,RRS,1.0,'C','N');
+    box(1.1,.42,.5,exMat(0x1c1f24,{r:.5}),cx,h,18.44,g);
+    const glass=new THREE.Mesh(new THREE.PlaneGeometry(.9,.34),new THREE.MeshStandardMaterial({color:0x9fd4ff,transparent:true,opacity:.35,emissive:0x4ab0ff,emissiveIntensity:.5,side:THREE.DoubleSide}));
+    glass.position.set(cx,h+.62,18.12); glass.rotation.x=-.5; glass.userData.noAO=true; g.add(glass);
+    screenOn(g,1.2,.68,cx,1.85,RRS-.04,Math.PI,'pHUD','Next-gen cockpit'); headerSign(g,'2','pHUD · next-gen cockpit','C',cx,2.3,RRS-.02,'N',1.1).position.y=2.27; },
+  {zone:[17.1,17.4,18.9,18.74],face:'N',ay:2.6});
+/* 3 · Gaming on wheels and 4 · Frictionless payment (B-SDV) – 92 × 46 cm tables on the south wall */
+station('3','C','Gaming on wheels',20.21,18.3,21.13,RRS,'92 × 46 cm table · wide wall screen','0.9 m table · screen at 1.2–1.95 m',
+  'Station 3: in-car gaming. A steering-wheel controller on a 92 × 46 cm Bosch table against the south wall, with a wide screen on the wall; visitors play standing.',
+  g=>{ const h=counter(g,20.21,18.3,21.13,RRS,.9,'C','N'); box(.4,.08,.24,VM.trim,20.67,h,18.55,g); cyl(.15,.03,VM.trim,20.67,h+.17,18.45,g,24,Math.PI/2.4,0);
+    screenOn(g,1.3,.73,20.67,1.62,RRS-.04,Math.PI,'Gaming on wheels','In-car entertainment'); headerSign(g,'3','Gaming on wheels','C',20.67,2.22,RRS-.02,'N',1.0); },
+  {zone:[19.95,17.75,21.4,18.74],face:'N',ay:2.6});
+station('4','C','Frictionless payment (B-SDV)',22.65,18.3,23.57,RRS,'92 × 46 cm table · 1 wall screen','0.9 m table · screen at 1.2–1.9 m',
+  'Station 4: frictionless in-car payment on the Bosch SDV platform – a payment terminal and the SDV mini demo car on a 92 × 46 cm Bosch table against the south wall.',
+  g=>{ const h=counter(g,22.65,18.3,23.57,RRS,.9,'C','N'); miniCar(g,22.95,h,18.53,.1,0);
+    box(.1,.16,.08,VM.trim,23.35,h,18.5,g); box(.09,.06,.005,exMat(0x0b1220,{e:0x2c4f7a,ei:.9}),23.35,h+.09,18.455,g);
+    screenOn(g,1.2,.68,23.11,1.6,RRS-.04,Math.PI,'Frictionless payment','B-SDV'); headerSign(g,'4','Frictionless payment','C',23.11,2.22,RRS-.02,'N',1.1); },
+  {zone:[22.4,17.75,23.85,18.74],face:'N',ay:2.6});
+/* 7 · Scalable ADAS (87 × 56 cm), 8 · Advanced VMM and 9 · Accident research India (92 × 46 cm) – east wall of the hall */
+station('7','A','Scalable ADAS',RRE-.56,16.9,RRE,17.77,'87 × 56 cm table · 1 wall screen','0.9 m table · screen at 1.2–1.9 m',
+  'Station 7: scalable ADAS software solutions, on an 87 × 56 cm Bosch table against the east wall with a screen above it.',
+  g=>{ const h=counter(g,RRE-.56,16.9,RRE,17.77,.9,'A','W'); prod(g,'laptop',23.92,h,17.33,.9,-Math.PI/2);
+    screenOn(g,1.0,.56,RRE-.04,1.6,17.33,-Math.PI/2,'Scalable ADAS','Software solutions'); headerSign(g,'7','Scalable ADAS','A',RRE-.02,2.17,17.33,'W',1.0); },
+  {zone:[23.2,16.75,RRE,17.95],face:'W',ay:2.6});
+station('8','S','Advanced VMM – vehicle motion management',RRE-.46,15.22,RRE,16.14,'92 × 46 cm table · 1 wall screen','0.9 m table · screen at 1.2–1.9 m',
+  'Station 8: advanced vehicle motion management, on a 92 × 46 cm Bosch table against the east wall with a screen above it.',
+  g=>{ const h=counter(g,RRE-.46,15.22,RRE,16.14,.9,'S','W'); prod(g,'ecu',24.0,h,15.5,.8,Math.PI/2); prod(g,'shock',24.0,h,15.92,.9);
+    screenOn(g,1.0,.56,RRE-.04,1.6,15.68,-Math.PI/2,'Advanced VMM','Vehicle motion'); headerSign(g,'8','Advanced VMM','S',RRE-.02,2.17,15.68,'W',1.0); },
+  {zone:[23.3,15.05,RRE,16.35],face:'W',ay:2.6});
+station('9','S','Accident research India',RRE-.46,13.57,RRE,14.49,'92 × 46 cm table · 1 wall screen','0.9 m table · screen at 1.2–1.9 m',
+  'Station 9: accident research India – crash and accident-data findings on a 92 × 46 cm Bosch table against the east wall, with a screen above it.',
+  g=>{ const h=counter(g,RRE-.46,13.57,RRE,14.49,.9,'S','W'); prod(g,'laptop',23.98,h,14.03,.9,-Math.PI/2);
+    screenOn(g,1.0,.56,RRE-.04,1.6,14.03,-Math.PI/2,'Accident research','India'); headerSign(g,'9','Accident research India','S',RRE-.02,2.17,14.03,'W',1.2); },
+  {zone:[23.3,13.4,RRE,14.7],face:'W',ay:2.6});
+/* 10 · V2X demonstrator + stack (120 × 90 cm) – east wall at the mouth of the wing */
+station('10','S','V2X demonstrator + stack',RRE-.9,9.96,RRE,11.16,'120 × 90 cm table · 2 wall screens','0.9 m table · screens at 1.2–1.9 m',
+  'Station 10: the V2X demonstrator with its software stack, on a 120 × 90 cm Bosch table against the east wall, with two screens on the wall.',
+  g=>{ const h=counter(g,RRE-.9,9.96,RRE,11.16,.9,'S','W'); prod(g,'box',23.7,h,10.25,.8); cyl(.012,.3,VM.trim,23.75,h+.15,10.9,g,8); prod(g,'ecu',23.75,h,10.85,.8,Math.PI/2);
+    [[9.9,'V2X','Demonstrator'],[11.25,'V2X stack','Software']].forEach(([z,a,b])=>screenOn(g,1.0,.56,RRE-.04,1.6,z,-Math.PI/2,a,b));
+    headerSign(g,'10','V2X demonstrator + stack','S',RRE-.02,2.17,10.56,'W',1.25); },
+  {zone:[22.95,9.6,RRE,11.5],face:'W',ay:2.6});
 
 /* ---------------- research wing (north-east) ---------------- */
-/* 9 · V2X demonstrator + stack – east wall of the wing passage */
-station('9','S','V2X demonstrator + stack',23.4,9.88,RRE,11.1,'counter ≈ 0.8 × 1.2 m · 1 wall screen','0.9 m counter · screen at 1.15–1.85 m',
-  'Station 9: the V2X demonstrator with its software stack, on a counter against the east wall at the mouth of the wing.',
-  g=>{ const h=counter(g,23.4,9.88,RRE,11.1,.86,'S','W'); prod(g,'box',23.8,h,10.2,.8); cyl(.012,.3,VM.trim,23.8,h+.15,10.75,g,8); prod(g,'ecu',23.8,h,10.75,.8,Math.PI/2);
-    screenOn(g,1.15,.65,RRE-.04,1.62,10.49,-Math.PI/2,'V2X','Demonstrator + stack'); headerSign(g,'9','V2X demonstrator + stack','S',RRE-.02,2.17,10.49,'W',1.25); },
-  {zone:[22.85,9.7,RRE,11.25],face:'W',ay:2.6});
-/* 10 · Suspension control system – against the north face of the store-room wall */
-station('10','S','Suspension control system',25.4,8.1,26.5,9.0,'counter ≈ 1.1 × 0.9 m · 1 wall screen','0.9 m counter · screen at 1.15–1.85 m',
-  'Station 10: the suspension control system with a damper on show, on a counter against the store-room wall with a screen above.',
-  g=>{ const h=counter(g,25.4,8.1,26.5,9.0,.86,'S','N'); prod(g,'shock',25.7,h,8.55,1.3); prod(g,'ecu',26.15,h,8.55,1);
-    screenOn(g,1.0,.56,25.95,1.62,8.96,Math.PI,'Suspension','Control system'); headerSign(g,'10','Suspension control','S',25.95,2.17,8.97,'N',1.0); },
-  {zone:[25.2,7.5,26.75,9.0],face:'N',ay:2.6});
-/* 11 · EM – 3/X-in-1 (co-axial), CCON Gen5, DINV – east wall of the wing */
-station('11','E','EM – 3/X-in-1 (co-axial) · CCON Gen5 · DINV',26.2,5.6,PKE,7.2,'counter ≈ 0.57 × 1.6 m · 2 wall screens','0.9 m counter · screens at 1.15–1.85 m',
-  'Station 11: the co-axial 3/X-in-1 e-axle, the Gen5 charging converter (CCON) and the DC inverter (DINV), on a counter against the east wall with two screens.',
-  g=>{ const h=counter(g,26.2,5.6,PKE,7.2,.86,'E','W'); prod(g,'axle',26.48,h,5.95,.8,Math.PI/2); prod(g,'box',26.48,h,6.45,.8,Math.PI/2); prod(g,'inverter',26.48,h,6.9,.6,Math.PI/2);
-    [[5.85,'X-in-1','Co-axial e-axle'],[6.95,'CCON · DINV','Power electronics']].forEach(([z,a,b])=>screenOn(g,1.0,.56,PKE-.04,1.62,z,-Math.PI/2,a,b));
-    headerSign(g,'11','EM · X-in-1 · CCON · DINV','E',PKE-.02,2.17,6.4,'W',1.3); },
-  {zone:[25.6,5.0,PKE,7.8],face:'W',ay:2.6});
-/* 13 · Core compute for future mobility and 14 · Virtualization – north wall of the wing */
-station('13','D','Core compute for future mobility – E/E architecture, HPC (vehicle) · XC',23.64,WGN,25.47,4.19,'counter ≈ 1.83 × 0.95 m · 49" monitor','0.9 m counter · monitor at 1.3–1.65 m',
-  'Station 13: core compute for future mobility – the E/E architecture and vehicle HPC from XC – on a counter against the north wall with a 49" large-screen monitor.',
-  g=>{ const h=counter(g,23.64,WGN,25.47,4.19,.86,'D','S'); prod(g,'ecu',24.0,h,3.7,1.3); prod(g,'chip',24.55,h,3.7,2); prod(g,'ecu',25.1,h,3.7,1);
-    screenOn(g,1.3,.38,24.55,1.55,WGN+.04,0,'Core compute','HPC · XC'); headerSign(g,'13','Core compute · HPC','D',24.55,2.17,WGN+.02,'S',1.2); },
-  {zone:[23.5,WGN,25.6,4.75],face:'S',ay:2.6});
-station('14','D','Virtualization (Samarth Bharat)',21.28,WGN,23.12,4.19,'desk ≈ 1.84 × 0.95 m · 2 wall screens + curved monitors','0.75 m desk · screens at 1.2–1.85 m',
-  'Station 14: hands-on virtualization demo for Samarth Bharat – curved monitors on a desk against the north wall, with two screens on the wall above.',
-  g=>{ const h=counter(g,21.28,WGN,23.12,4.19,.74,'D','S');
-    for(const x of [21.75,22.65]){ const m=new THREE.Group(); m.position.set(x,h,3.75); g.add(m); box(.06,.14,.06,VM.trim,0,0,0,m);
-      const cv=new THREE.Mesh(new THREE.CylinderGeometry(1.1,1.1,.36,24,1,true,-.4,.8),new THREE.MeshStandardMaterial({color:0x0b1220,emissive:0x2c4f7a,emissiveIntensity:.8,side:THREE.DoubleSide})); cv.position.set(0,.33,-1.1); cv.userData.noAO=true; m.add(cv); }
-    [[21.65,'Samarth Bharat','Virtualization'],[22.75,'Virtual ECU','Cloud · SIL']].forEach(([x,a,b])=>screenOn(g,1.0,.56,x,1.62,WGN+.04,0,a,b));
-    headerSign(g,'14','Virtualization · Samarth Bharat','D',22.2,2.17,WGN+.02,'S',1.4); },
-  {zone:[21.15,WGN,23.3,4.75],face:'S',ay:2.6});
-/* 15 · Semiconductors and sensors – double-sided island in the middle of the wing */
-station('15','D','Semiconductors and sensors (double-sided island)',21.97,5.74,23.78,6.78,'island ≈ 1.81 × 1.04 m, two table tops back to back · screens on a central spine','0.9 m tables · spine 1.9 m',
-  'Station 15 appears twice on the drawing: one table top on each side of a central screen spine, so two groups can be shown semiconductors and MEMS sensors at once. Viewed from the lanes to the north and south.',
-  g=>{ counter(g,21.97,5.74,23.78,6.22,.86,'D','N'); const h=counter(g,21.97,6.3,23.78,6.78,.86,'D','S');
-    box(2.15,1.9,.06,exMat(0xf1efeb,{r:.4}),22.875,FY,6.26,g);
-    for(const [z,r] of [[6.22,Math.PI],[6.3,0]]) screenOn(g,1.0,.56,22.875,1.45,z,r,'Semiconductors','& sensors');
-    for(let i=0;i<4;i++){ prod(g,'chip',22.25+i*.45,h,5.98,2); prod(g,'chip',22.25+i*.45,h,6.55,2); }
-    for(const [z,f] of [[6.23,'N'],[6.29,'S']]) headerSign(g,'15','Semiconductors & sensors','D',22.875,1.98,z+(f==='N'?-.01:.01),f,1.2); },
-  {cols:[[21.97,5.74,23.78,6.78],[21.8,6.22,23.95,6.3]],zone:[21.75,5.5,24.0,7.05],face:'S',ay:2.4});
-/* 17–20 – four counters along the west wall of the wing, screens on the wall */
-[['17','D','Micrologix features',5.03,6.03,'Micrologix','Features'],
- ['18','D','X domain and gateway – 2WP',6.47,7.62,'X domain','Gateway · 2WP'],
- ['19','E','Next-gen powertrain (ICE) – 2-wheeler',8.05,9.22,'Powertrain ICE','2-wheeler'],
- ['20','E','Electrification: 3-wheeler – e-motor & Bosch control unit',10.03,11.38,'Electrification','3W e-motor · ECU']].forEach(([code,t,name,z0,z1,a,b])=>{
-  const zc=(z0+z1)/2;
-  station(code,t,name,19.26,z0,19.99,z1,`counter ≈ 0.73 × ${(z1-z0).toFixed(2)} m · 1 wall screen`,'0.9 m counter · screen at 1.15–1.85 m',
-    `Station ${code}: ${name}, on a counter against the west wall of the wing with a screen above it.`,
-    g=>{ const h=counter(g,19.26,z0,19.99,z1,.86,t,'E');
-      if(code==='17'){ prod(g,'chip',19.6,h,zc-.25,2); prod(g,'ecu',19.6,h,zc+.2,.9,Math.PI/2); }
-      else if(code==='18'){ prod(g,'ecu',19.6,h,zc-.3,1,Math.PI/2); prod(g,'box',19.6,h,zc+.3,.7,Math.PI/2); }
-      else if(code==='19'){ prod(g,'ecu',19.6,h,zc-.3,1,Math.PI/2); prod(g,'motor',19.6,h,zc+.25,.8,Math.PI/2); }
-      else { prod(g,'motor',19.6,h,zc-.3,1,Math.PI/2); prod(g,'ecu',19.6,h,zc+.35,.9,Math.PI/2); }
-      screenOn(g,Math.min(1.0,z1-z0-.05),.56,19.3,1.62,zc,Math.PI/2,a,b); headerSign(g,code,a+' · '+b,t,19.29,2.17,zc,'E',1.05); },
-    {zone:[19.26,z0-.15,20.6,z1+.15],face:'E',ay:2.6}); });
+/* 11 · Suspension control system (92 × 92 cm) – against the store-room wall */
+station('11','S','Suspension control system',25.5,8.08,26.42,9.0,'92 × 92 cm table · 1 wall screen','0.9 m table · screen at 1.2–1.9 m',
+  'Station 11: the suspension control system with a damper on show, on a 92 × 92 cm Bosch table against the store-room wall, with a screen above.',
+  g=>{ const h=counter(g,25.5,8.08,26.42,9.0,.9,'S','N'); prod(g,'shock',25.75,h,8.55,1.2); prod(g,'ecu',26.15,h,8.55,.8);
+    screenOn(g,1.0,.56,25.96,1.6,8.96,Math.PI,'Suspension','Control system'); headerSign(g,'11','Suspension control','S',25.96,2.17,8.97,'N',1.0); },
+  {zone:[25.3,7.75,26.62,9.0],face:'N',ay:2.6});
+/* 12 · 3/X-in-1 (co-axial), CCON Gen5, DINV (165 × 80 cm) – east wall of the wing */
+station('12','E','3/X-in-1 (co-axial) · CCON Gen5 · DINV',PKE-.8,5.8,PKE,7.45,'165 × 80 cm table · 2 wall screens','0.9 m table · screens at 1.2–1.9 m',
+  'Station 12: the co-axial 3/X-in-1 e-axle, the Gen5 charging converter (CCON) and the DC inverter (DINV), on a 165 × 80 cm Bosch table against the east wall with two screens.',
+  g=>{ const h=counter(g,PKE-.8,5.8,PKE,7.45,.9,'E','W'); prod(g,'axle',26.37,h,6.2,.8,Math.PI/2); prod(g,'box',26.37,h,6.7,.8,Math.PI/2); prod(g,'inverter',26.37,h,7.12,.6,Math.PI/2);
+    [[5.9,'3/X-in-1','Co-axial e-axle'],[7.35,'CCON Gen5 · DINV','Power electronics']].forEach(([z,a,b])=>screenOn(g,1.15,.65,PKE-.04,1.6,z,-Math.PI/2,a,b));
+    headerSign(g,'12','3/X-in-1 · CCON · DINV','E',PKE-.02,2.17,6.62,'W',1.25); },
+  {zone:[25.5,5.55,PKE,7.7],face:'W',ay:2.6});
+/* 15 · Semiconductors and sensors – two 165 × 80 cm tables in an L in the north-east corner */
+station('15','D','Semiconductors and sensors',24.32,WGN,PKE,4.89,'two 165 × 80 cm tables in an L · 2 wall screens','0.9 m tables · screens at 1.2–1.9 m',
+  'Station 15: semiconductors and MEMS sensors on two 165 × 80 cm Bosch tables set in an L in the north-east corner – one along the north wall, one along the east wall – each with a screen above it.',
+  g=>{ counter(g,24.32,WGN,25.97,4.04,.9,'D','S'); const h=counter(g,25.97,WGN,PKE,4.89,.9,'D','W');
+    for(let i=0;i<3;i++){ prod(g,'chip',24.7+i*.4,h,3.65,2); prod(g,'chip',26.37,h,3.95+i*.35,2); }
+    screenOn(g,1.2,.68,25.3,1.6,WGN+.04,0,'Semiconductors','Bosch chips'); screenOn(g,1.2,.68,PKE-.04,1.6,4.25,-Math.PI/2,'MEMS sensors','Bosch sensors');
+    headerSign(g,'15','Semiconductors & sensors','D',25.15,2.17,WGN+.02,'S',1.3); },
+  {cols:[[24.32,WGN,25.97,4.04],[25.97,WGN,PKE,4.89]],zone:[24.15,WGN,PKE,5.1],face:'S',ay:2.6,ax:25.4,az:4.0});
+/* 13 · Core compute for future mobility (west table) + HPC cockpit (east table) – two 240 × 80 cm tables either side of a screen spine */
+station('13','D','Core compute for future mobility (E/E architecture – HPC vehicle, XC) · HPC cockpit',21.79,5.2,23.51,7.6,'two 240 × 80 cm tables either side of a screen spine','0.9 m tables · spine 2.0 m',
+  'Station 13 in the middle of the wing: two 240 × 80 cm Bosch tables back to back with a screen spine between them. The west table shows core compute for future mobility (E/E architecture, vehicle HPC from XC); the east table shows the HPC cockpit.',
+  g=>{ counter(g,21.79,5.2,22.59,7.6,.9,'D','W'); const h=counter(g,22.71,5.2,23.51,7.6,.9,'D','E');
+    box(.12,2.0,2.65,BT.body,22.65,FY,6.4,g); box(.13,.06,2.65,exMat(THEME.D.c),22.65,FY+1.94,6.4,g);
+    screenOn(g,1.35,.76,22.58,1.45,6.4,-Math.PI/2,'Core compute','E/E · HPC vehicle'); screenOn(g,1.35,.76,22.72,1.45,6.4,Math.PI/2,'HPC cockpit','XC');
+    prod(g,'ecu',22.2,h,5.7,1.3,Math.PI/2); prod(g,'chip',22.2,h,6.4,2); prod(g,'ecu',22.2,h,7.1,1,Math.PI/2);
+    prod(g,'box',23.1,h,5.75,.9,Math.PI/2); cyl(.13,.03,VM.trim,23.1,h+.15,6.5,g,24,0,Math.PI/2.6); prod(g,'ecu',23.1,h,7.15,.9,Math.PI/2);
+    headerSign(g,'13','Core compute','D',22.57,2.17,6.4,'W',1.0); headerSign(g,'13','HPC cockpit','D',22.73,2.17,6.4,'E',1.0); },
+  {cols:[[21.79,5.2,23.51,7.6],[22.59,5.08,22.71,7.73]],zone:[21.55,5.05,23.75,7.85],face:'W',key:true,ay:2.6});
+/* 14 · Virtualization (Samarth Bharat), 16 · S score + Google SDV, 17 · Micrologix features – 92 × 46 cm tables on the north wall */
+[['14','D','Virtualization (Samarth Bharat)',22.9,'Virtualization','Samarth Bharat'],
+ ['16','D','S score + Google SDV',21.36,'S score','Google SDV'],
+ ['17','D','Micrologix features',19.92,'Micrologix','Features']].forEach(([code,t,name,cx,a,b])=>{
+  station(code,t,name,cx-.46,WGN,cx+.46,WGN+.46,'92 × 46 cm table · 1 wall screen','0.9 m table · screen at 1.2–1.9 m',
+    `Station ${code}: ${name}, on a 92 × 46 cm Bosch table against the north wall of the wing with a screen above it.`,
+    g=>{ const h=counter(g,cx-.46,WGN,cx+.46,WGN+.46,.9,t,'S');
+      if(code==='14'){ const m=new THREE.Group(); m.position.set(cx,h,3.5); g.add(m); box(.06,.12,.06,VM.trim,0,0,0,m);
+        const cv=new THREE.Mesh(new THREE.CylinderGeometry(1.1,1.1,.3,24,1,true,-.3,.6),new THREE.MeshStandardMaterial({color:0x0b1220,emissive:0x2c4f7a,emissiveIntensity:.8,side:THREE.DoubleSide})); cv.position.set(0,.28,-1.1); cv.userData.noAO=true; m.add(cv); }
+      else if(code==='16') prod(g,'laptop',cx,h,3.5,1,0);
+      else { prod(g,'chip',cx-.18,h,3.48,2); prod(g,'ecu',cx+.18,h,3.48,.7); }
+      screenOn(g,1.2,.68,cx,1.6,WGN+.04,0,a,b); headerSign(g,code,a+' · '+b,t,cx,2.17,WGN+.02,'S',1.1); },
+    {zone:[cx-.66,WGN,cx+.66,4.15],face:'S',ay:2.6}); });
+/* 18 · X domain and gateway – 2WP · Next-gen powertrain (ICE) 2-wheeler – 240 × 70 cm table on the west wall */
+station('18','E','X domain and gateway – 2WP · Next-gen powertrain (ICE) 2-wheeler',19.26,8.22,19.96,10.62,'240 × 70 cm table · 2 wall screens','0.9 m table · screens at 1.2–1.9 m',
+  'Station 18 covers two-wheeler topics on one 240 × 70 cm Bosch table against the west wall of the wing: the X-domain controller and gateway for 2-wheelers (2WP), and the next-generation ICE powertrain for 2-wheelers. One screen above each half.',
+  g=>{ const h=counter(g,19.26,8.22,19.96,10.62,.9,'E','E'); prod(g,'ecu',19.6,h,8.65,1,Math.PI/2); prod(g,'box',19.6,h,9.15,.7,Math.PI/2); prod(g,'ecu',19.6,h,9.75,.9,Math.PI/2); prod(g,'motor',19.6,h,10.25,.8,Math.PI/2);
+    [[8.8,'X domain · gateway','2-wheeler'],[10.05,'Powertrain ICE','2-wheeler']].forEach(([z,a,b])=>screenOn(g,1.0,.56,19.3,1.6,z,Math.PI/2,a,b));
+    headerSign(g,'18','2-wheeler · gateway & powertrain','E',19.29,2.17,9.42,'E',1.4); },
+  {zone:[19.26,8.0,20.3,10.85],face:'E',ay:2.6});
 
 /* door landing kept clear (green) */
 (function(){ const m=new THREE.Mesh(new THREE.PlaneGeometry(1.0,2.2).rotateX(-Math.PI/2),new THREE.MeshBasicMaterial({color:0x16a05a,transparent:true,opacity:.13,depthWrite:false,polygonOffset:true,polygonOffsetFactor:-3}));
@@ -2016,11 +2033,10 @@ station('15','D','Semiconductors and sensors (double-sided island)',21.97,5.74,2
 
 /* ============ people at the stations (skipped automatically where they would stand on a walking route) ============ */
 (function(){ const fa=(dx,dz)=>Math.atan2(-dz,dx), P=(x,z,f,pose,kind,hy=0)=>addPerson(gPeople0,x,FY,z,f,pose,kind,0,hy);
-  addPerson(gPeople0,14.75,FY+.05,16.75,fa(-1,0),'seat','exec',0,.1,false);   // in the AI cockpit
-  P(15.6,15.0,fa(-1,.4),'talk','staff',.2);                                    // cockpit host
-  addPerson(gPeople0,20.82,FY+.05,17.3,fa(0,1),'seat','visitor',0,0,false);    // gaming seat
-  P(18.2,17.4,fa(0,1),'folded','exec',0); P(25.0,6.5,fa(1,0),'point','exec',.1); P(24.3,3.95+.75,fa(0,-1),'talk','staff',0);
-  P(20.55,9.6,fa(-1,0),'stand','exec',0); P(18.75,15.75,fa(-1,0),'talk','staff',.2);
+  addPerson(gPeople0,14.28,FY+.08,16.4,fa(-1,0),'seat','exec',0,.1,false);   // in the AI cockpit (driver seat)
+  P(16.6,15.6,fa(-1,.3),'talk','staff',.2); P(18.0,17.3,fa(0,1),'folded','exec',0);
+  P(21.1,13.9,fa(-1,0),'talk','staff',.1); P(23.2,9.6,fa(1,.2),'stand','exec',0);
+  P(21.2,6.4,fa(1,0),'point','exec',.1); P(24.0,6.4,fa(-1,0),'talk','staff',0); P(25.3,4.95,fa(.4,-1),'stand','exec',0);
 })();
 /* ============================ Performance: merge static meshes ============================
    Every small box of the fit-out was its own draw call (and drawn again for shadows and ambient occlusion).
@@ -2288,7 +2304,7 @@ function walkStep(dt){
     yaw=W.yaw+W.ly; pitch=W.lp-.03;
     if(document.activeElement!==$('#plS')) $('#plS').value=W.u/L*1000;
     let near=null,nd=3.2; STOPS.forEach(s=>{ if(!ROUTES[W.route].includes(s.seg))return; const d=Math.hypot(s.p.x-eye.x,s.p.z-eye.z); if(d<nd&&Math.abs(s.p.y-(eye.y-EYE))<1.3){nd=d;near=s;} });
-    $('#plCap').textContent=(SEG[W.route]&&SEG[W.route].tour?'Tour '+W.route.slice(1)+' · '+SEG[W.route].name:({pub:'Public',oemA:'OEM · A Meeting rooms',oemB:'OEM · B Mezzanine'})[W.route])+'  ·  '+(near?near.t:'en route')+'  ·  '+Math.round(W.u/L*100)+'%';
+    $('#plCap').textContent=(SEG[W.route]&&SEG[W.route].tour?'Tour '+W.route.slice(1)+' · '+SEG[W.route].name:({pub:'Public',oemA:'OEM · A Meeting rooms',oemB:'OEM · B Mezzanine'})[W.route])+'  ·  '+(near?(near.tour?near.n+' · ':'')+near.t:'en route')+'  ·  '+Math.round(W.u/L*100)+'%';
   }else{
     yaw=W.yaw; pitch=W.pitch; const run=keys.has('shift')?3.6:1.8;
     if(keys.has('arrowleft'))W.yaw+=dt*1.8; if(keys.has('arrowright'))W.yaw-=dt*1.8;
@@ -2317,17 +2333,17 @@ addEventListener('blur',()=>keys.clear());
    click an arrow on the floor (or anywhere on the floor) to glide to the next viewpoint, scroll to zoom,
    and use the minimap or the ‹ › buttons to jump between the numbered stations. */
 const SVN=[ // viewpoints [id,x,z,label]
-  ['door',13.6,13.4,'Entrance'],['k1',14.6,14.25,'Station 1 · AI cockpit'],['k2',16.4,13.3,'Launch area (north)'],['k3',16.95,15.2,'Launch area'],
-  ['k4',18.0,16.7,'Station 2 · pHUD'],['k5',20.8,16.55,'Station 3 · Gaming on wheels'],['k6',22.45,17.05,'Station 4 · Frictionless payment'],
-  ['k7',20.95,15.55,'Station 6 · ADAS CV'],['k8',22.6,15.95,'Station 7 · Advanced VMM'],['k9',20.95,14.3,'Station 5 · Scalable ADAS'],['k10',22.6,14.1,'Station 8 · Accident research'],
-  ['k11',18.4,12.8,'North aisle'],['k12',20.6,12.75,'Into the wing'],['k13',22.45,12.6,'Into the wing'],
-  ['w1',22.6,10.5,'Station 9 · V2X'],['w2',20.9,10.7,'Station 20 · Electrification 3W'],['w3',20.9,8.6,'Station 19 · Powertrain ICE 2W'],['w4',20.9,7.05,'Station 18 · X domain & gateway'],
-  ['w5',20.9,5.5,'Station 17 · Micrologix'],['w6',22.2,4.9,'Station 14 · Virtualization'],['w7',24.5,4.9,'Station 13 · Core compute'],['w8',25.3,6.4,'Station 11 · X-in-1'],
-  ['w9',25.6,7.5,'Station 10 · Suspension'],['w10',22.9,7.4,'Station 15 · Semiconductors (south)'],['w11',23.2,5.15,'Station 15 · Semiconductors (north)'],['w12',22.6,8.9,'Wing south']];
+  ['door',13.6,13.6,'Entrance'],['k1',15.3,15.2,'Station 1 · AI-powered cockpit'],['k2',18.0,16.95,'Station 2 · pHUD'],['k3',20.67,17.4,'Station 3 · Gaming on wheels'],
+  ['k4',22.95,17.55,'Station 4 · Frictionless payment'],['k7',22.85,16.85,'Station 7 · Scalable ADAS'],['k8',22.85,15.68,'Station 8 · Advanced VMM'],['k9',22.85,14.03,'Station 9 · Accident research'],
+  ['k6',20.6,15.58,'Station 6 · ADAS CV manoeuvring'],['k5',20.6,14.33,'Station 5 · ADAS CV driving'],['a4',17.2,15.0,'Hall centre'],['a1',17.5,13.0,'North aisle'],['a2',20.6,12.9,'Into the wing'],
+  ['a3',22.45,12.6,'Into the wing'],['k10',22.4,10.56,'Station 10 · V2X'],['w0',22.4,8.5,'Wing south'],['k18',20.75,9.42,'Station 18 · 2-wheeler'],
+  ['k11',25.6,7.75,'Station 11 · Suspension'],['w1',24.0,8.3,'Wing east'],['k12',25.0,6.62,'Station 12 · X-in-1'],['k15',25.05,5.05,'Station 15 · Semiconductors & sensors'],
+  ['k13e',24.2,6.4,'Station 13 · HPC cockpit side'],['k13w',21.05,6.4,'Station 13 · Core compute side'],['k14',22.9,4.6,'Station 14 · Virtualization'],
+  ['k16',21.36,4.6,'Station 16 · S score + Google SDV'],['k17',19.92,4.6,'Station 17 · Micrologix']];
 /* stations in visitor-loop order: [code, viewpoint, look-at x, z] */
-const SV_ST=[['1','k1',14.75,16.75],['L','k3',19.2,14.8],['2','k4',17.99,18.3],['3','k5',20.82,18.5],['4','k6',23.56,18.3],['7','k8',23.8,16.09],['6','k7',19.65,15.56],
-  ['8','k10',23.8,14.11],['5','k9',19.65,14.27],['9','w1',23.8,10.49],['10','w9',25.95,8.55],['11','w8',26.5,6.4],['13','w7',24.55,3.7],['15','w11',22.875,6.0],
-  ['14','w6',22.2,3.7],['17','w5',19.6,5.53],['18','w4',19.6,7.05],['19','w3',19.6,8.63],['20','w2',19.6,10.7]];
+const SV_ST=[['1','k1',13.4,16.8],['2','k2',17.99,18.3],['3','k3',20.67,18.5],['4','k4',23.11,18.5],['7','k7',23.95,17.33],['8','k8',24.0,15.68],['6','k6',19.7,15.58],
+  ['9','k9',24.0,14.03],['5','k5',19.7,14.33],['10','k10',23.8,10.56],['11','k11',25.96,8.55],['12','k12',26.37,6.62],['15','k15',26.0,4.0],['13','k13e',23.1,6.4],
+  ['14','k14',22.9,3.5],['16','k16',21.36,3.5],['17','k17',19.92,3.5],['18','k18',19.6,9.42]];
 const SV={on:false,node:'door',yaw:Math.PI/2,pitch:-.2,fov:75,glide:null,hover:null,cur:-1,dragged:false};
 const svIdx={}; SVN.forEach((n,i)=>svIdx[n[0]]=i);
 /* links: viewpoints within 3.4 m that can be walked between without touching anything */
