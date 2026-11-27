@@ -1423,16 +1423,16 @@ const STOPS_T=[];
 const TN={DOOR:[12.2,14.1],A:[13.6,14.1],B:[15.07,14.1],C:[15.07,16.67],D:[22.35,16.67],E:[22.35,8.55],H0:[20.64,12.3],H:[20.4,12.9],H2:[19.0,12.9],X1:[16.0,12.9],DO:[13.6,12.9],EXIT:[12.2,12.9]};
 const TV={'1':[15.07,15.6,'AI-powered cockpit'],'2':[18.0,16.67,'pHUD'],'3':[20.67,16.67,'Gaming on wheels'],'4':[21.7,16.67,'Frictionless payment'],
   '7':[22.35,16.2,'Scalable ADAS'],'8':[22.35,15.68,'Advanced VMM'],'6':[22.35,15.1,'ADAS CV · manoeuvring'],'9':[22.35,14.4,'Accident research India'],'5':[22.35,13.8,'ADAS CV · driving'],
-  '10':[22.35,10.56,'V2X demonstrator'],'11':[24.63,8.55,'Suspension control'],'12':[24.63,6.62,'3/X-in-1 · CCON · DINV'],'15':[24.63,4.77,'Semiconductors & sensors'],
-  '13':[23.6,4.77,'Core compute · HPC cockpit'],'14':[22.9,4.77,'Virtualization'],'16':[21.36,4.77,'S score + Google SDV'],'17':[20.64,4.77,'Micrologix'],'18':[20.64,9.42,'2W gateway & powertrain']};
-const STORY=['DOOR','A','B','1','C','2','3','4','D','7','8','6','9','5','10','E','11','12','15','13','14','16','17','18','H0','H','H2','X1','DO','EXIT'];
+  '10':[22.35,10.56,'V2X demonstrator'],'11':[24.63,8.55,'Suspension control'],'12':[24.63,6.62,'3/X-in-1 · CCON · DINV'],'13':[24.63,4.77,'Semiconductors & sensors'],
+  '16':[23.6,4.77,'Core compute · S score · HPC cockpit'],'14':[22.79,4.77,'Virtualization'],'15':[20.64,4.77,'BEG'],'17':[20.64,9.42,'2W gateway & powertrain']};
+const STORY=['DOOR','A','B','1','C','2','3','4','D','7','8','6','9','5','10','E','11','12','13','16','14','15','17','H0','H','H2','X1','DO','EXIT'];
 const tourPick=set=>STORY.map(n=>!TV[n]||set.includes(n)?n:'~'+n);   // skipped stations stay on the path (walked past), they are just not stops
 const TOURS=[
  ['r1','Full visitor loop · all stations','#0f9d9a',STORY],
- ['r2','Passenger-car OEM','#2f6fed',tourPick(['1','2','4','7','8','6','9','5','10','13','15'])],
- ['r3','SDV & E/E architecture','#7a5c8e',tourPick(['1','4','13','14','15','16','17'])],
- ['r4','2W / 3W OEM · Bharat','#e8772e',tourPick(['3','14','17','18','12'])],
- ['r5','Commercial vehicle & off-highway','#3f8f5a',tourPick(['6','9','10','11','12','13'])],
+ ['r2','Passenger-car OEM','#2f6fed',tourPick(['1','2','4','7','8','6','9','5','10','16','13'])],
+ ['r3','SDV & E/E architecture','#7a5c8e',tourPick(['1','4','16','14','13','15'])],
+ ['r4','2W / 3W OEM · Bharat','#e8772e',tourPick(['3','4','14','15','17','12'])],
+ ['r5','Commercial vehicle & off-highway','#3f8f5a',tourPick(['6','9','10','11','12','16'])],
 ];
 const TOUR={sel:'r1'};
 TOURS.forEach(([k,name,css,seq])=>{ SEG[k]={css,hex:parseInt(css.slice(1),16),name,tour:true,pts:PP(seq.map(n=>(TN[n]||TV[n.replace('~','')]).slice(0,2)))};
@@ -1760,7 +1760,7 @@ const gHall=new THREE.Group(); root.add(gHall);
 })();
 const HALL_FOG=new THREE.Fog(0xeceae6,60,140); scene.fog=HALL_FOG;
 /* ============================ Research room exhibits (layout "Research room layout 1", 25 Nov 2026) ============================
-   Numbered stations 1–18 as on the drawing, each on Bosch exhibit tables at the sizes written on the plan. Each station has a coloured
+   Numbered stations 1–17 as on the drawing (rev. 27 Nov 2026), each on Bosch exhibit tables at the sizes written on the plan. Each station has a coloured
    floor inlay with a solid border and a floor number plate on its visitor side.
    Positions measured from the drawing; sizes from the exhibit list where given, otherwise taken from the drawing. */
 const THEME={X:{c:0x1c1f24,css:'#1c1f24',n:'Launch'},B:{c:0xe8772e,css:'#e8772e',n:'Bharat'},A:{c:0x2f6fed,css:'#2f6fed',n:'ADAS'},
@@ -1901,7 +1901,7 @@ station('3','C','Gaming on wheels',20.21,18.3,21.13,RRS,'92 × 46 cm table · wi
   g=>{ const h=counter(g,20.21,18.3,21.13,RRS,.9,'C','N'); box(.4,.08,.24,VM.trim,20.67,h,18.55,g); cyl(.15,.03,VM.trim,20.67,h+.17,18.45,g,24,Math.PI/2.4,0);
     screenOn(g,1.3,.73,20.67,1.62,RRS-.04,Math.PI,'Gaming on wheels','In-car entertainment'); headerSign(g,'3','Gaming on wheels','C',20.67,2.22,RRS-.02,'N',1.0); },
   {zone:[19.95,17.75,21.4,18.74],face:'N',ay:2.6});
-station('4','C','Frictionless payment (B-SDV)',22.65,18.3,23.57,RRS,'92 × 46 cm table · 1 wall screen','0.9 m table · screen at 1.2–1.9 m',
+station('4','C','Frictionless payment (B-SDV) · Bharat SDV',22.65,18.3,23.57,RRS,'92 × 46 cm table · 1 wall screen','0.9 m table · screen at 1.2–1.9 m',
   'Station 4: frictionless in-car payment on the Bosch SDV platform – a payment terminal and the SDV mini demo car on a 92 × 46 cm Bosch table against the south wall.',
   g=>{ const h=counter(g,22.65,18.3,23.57,RRS,.9,'C','N'); miniCar(g,22.95,h,18.53,.1,0);
     box(.1,.16,.08,VM.trim,23.35,h,18.5,g); box(.09,.06,.005,exMat(0x0b1220,{e:0x2c4f7a,ei:.9}),23.35,h+.09,18.455,g);
@@ -1945,43 +1945,41 @@ station('12','E','3/X-in-1 (co-axial) · CCON Gen5 · DINV',PKE-.8,5.8,PKE,7.45,
     [[5.9,'3/X-in-1','Co-axial e-axle'],[7.35,'CCON Gen5 · DINV','Power electronics']].forEach(([z,a,b])=>screenOn(g,1.15,.65,PKE-.04,1.6,z,-Math.PI/2,a,b));
     headerSign(g,'12','3/X-in-1 · CCON · DINV','E',PKE-.02,2.17,6.62,'W',1.25); },
   {zone:[25.5,5.55,PKE,7.7],face:'W',ay:2.6});
-/* 15 · Semiconductors and sensors – two 165 × 80 cm tables in an L in the north-east corner */
-station('15','D','Semiconductors and sensors',24.32,WGN,PKE,4.89,'two 165 × 80 cm tables in an L · 2 wall screens','0.9 m tables · screens at 1.2–1.9 m',
-  'Station 15: semiconductors and MEMS sensors on two 165 × 80 cm Bosch tables set in an L in the north-east corner – one along the north wall, one along the east wall – each with a screen above it.',
+/* 13 · Semiconductors and sensors – two 165 × 80 cm tables in an L in the north-east corner */
+station('13','D','Semiconductors and sensors',24.32,WGN,PKE,4.89,'two 165 × 80 cm tables in an L · 2 wall screens','0.9 m tables · screens at 1.2–1.9 m',
+  'Station 13: semiconductors and MEMS sensors on two 165 × 80 cm Bosch tables set in an L in the north-east corner – one along the north wall, one along the east wall – each with a screen above it.',
   g=>{ counter(g,24.32,WGN,25.97,4.04,.9,'D','S'); const h=counter(g,25.97,WGN,PKE,4.89,.9,'D','W');
     for(let i=0;i<3;i++){ prod(g,'chip',24.7+i*.4,h,3.65,2); prod(g,'chip',26.37,h,3.95+i*.35,2); }
     screenOn(g,1.2,.68,25.3,1.6,WGN+.04,0,'Semiconductors','Bosch chips'); screenOn(g,1.2,.68,PKE-.04,1.6,4.25,-Math.PI/2,'MEMS sensors','Bosch sensors');
-    headerSign(g,'15','Semiconductors & sensors','D',25.15,2.17,WGN+.02,'S',1.3); },
+    headerSign(g,'13','Semiconductors & sensors','D',25.15,2.17,WGN+.02,'S',1.3); },
   {cols:[[24.32,WGN,25.97,4.04],[25.97,WGN,PKE,4.89]],zone:[24.15,WGN,PKE,5.1],face:'S',ay:2.6,ax:25.4,az:4.0});
-/* 13 · Core compute for future mobility (west table) + HPC cockpit (east table) – two 240 × 80 cm tables either side of a screen spine */
-station('13','D','Core compute for future mobility (E/E architecture – HPC vehicle, XC) · HPC cockpit',21.79,5.2,23.51,7.6,'two 240 × 80 cm tables either side of a screen spine','0.9 m tables · spine 2.0 m',
-  'Station 13 in the middle of the wing: two 240 × 80 cm Bosch tables back to back with a screen spine between them. The west table shows core compute for future mobility (E/E architecture, vehicle HPC from XC); the east table shows the HPC cockpit.',
+/* 16 · Core compute for future mobility – two 240 × 80 cm tables either side of a screen spine: S score + Google SDV (west), HPC cockpit (east) */
+station('16','D','Core compute for future mobility (E/E arch – HPC vehicle, XC): S score + Google SDV · HPC cockpit',21.79,5.2,23.51,7.6,'two 240 × 80 cm tables either side of a screen spine','0.9 m tables · spine 2.0 m',
+  'Station 16 in the middle of the wing, core compute for future mobility (E/E architecture, vehicle HPC from XC): two 240 × 80 cm Bosch tables back to back with a screen spine between them. The west table shows S score + Google SDV; the east table shows the HPC cockpit.',
   g=>{ counter(g,21.79,5.2,22.59,7.6,.9,'D','W'); const h=counter(g,22.71,5.2,23.51,7.6,.9,'D','E');
     box(.12,2.0,2.65,BT.body,22.65,FY,6.4,g); box(.13,.06,2.65,exMat(THEME.D.c),22.65,FY+1.94,6.4,g);
-    screenOn(g,1.35,.76,22.58,1.45,6.4,-Math.PI/2,'Core compute','E/E · HPC vehicle'); screenOn(g,1.35,.76,22.72,1.45,6.4,Math.PI/2,'HPC cockpit','XC');
-    prod(g,'ecu',22.2,h,5.7,1.3,Math.PI/2); prod(g,'chip',22.2,h,6.4,2); prod(g,'ecu',22.2,h,7.1,1,Math.PI/2);
+    screenOn(g,1.35,.76,22.58,1.45,6.4,-Math.PI/2,'S score','Google SDV'); screenOn(g,1.35,.76,22.72,1.45,6.4,Math.PI/2,'HPC cockpit','XC');
+    prod(g,'laptop',22.2,h,5.8,1,-Math.PI/2); prod(g,'ecu',22.2,h,6.5,1.2,Math.PI/2); prod(g,'laptop',22.2,h,7.1,1,-Math.PI/2);
     prod(g,'box',23.1,h,5.75,.9,Math.PI/2); cyl(.13,.03,VM.trim,23.1,h+.15,6.5,g,24,0,Math.PI/2.6); prod(g,'ecu',23.1,h,7.15,.9,Math.PI/2);
-    headerSign(g,'13','Core compute','D',22.57,2.17,6.4,'W',1.0); headerSign(g,'13','HPC cockpit','D',22.73,2.17,6.4,'E',1.0); },
+    headerSign(g,'16','S score + Google SDV','D',22.57,2.17,6.4,'W',1.1); headerSign(g,'16','HPC cockpit','D',22.73,2.17,6.4,'E',1.0); },
   {cols:[[21.79,5.2,23.51,7.6],[22.59,5.08,22.71,7.73]],zone:[21.55,5.05,23.75,7.85],face:'W',key:true,ay:2.6});
-/* 14 · Virtualization (Samarth Bharat), 16 · S score + Google SDV, 17 · Micrologix features – 92 × 46 cm tables on the north wall */
-[['14','D','Virtualization (Samarth Bharat)',22.9,'Virtualization','Samarth Bharat'],
- ['16','D','S score + Google SDV',21.36,'S score','Google SDV'],
- ['17','D','Micrologix features',19.92,'Micrologix','Features']].forEach(([code,t,name,cx,a,b])=>{
+/* 15 · BEG and 14 · Virtualization (Samarth Bharat) – 92 × 46 cm tables on the north wall */
+[['15','D','BEG',20.62,'BEG','Bosch Engineering'],
+ ['14','D','Virtualization (Samarth Bharat)',22.79,'Virtualization','Samarth Bharat']].forEach(([code,t,name,cx,a,b])=>{
   station(code,t,name,cx-.46,WGN,cx+.46,WGN+.46,'92 × 46 cm table · 1 wall screen','0.9 m table · screen at 1.2–1.9 m',
     `Station ${code}: ${name}, on a 92 × 46 cm Bosch table against the north wall of the wing with a screen above it.`,
     g=>{ const h=counter(g,cx-.46,WGN,cx+.46,WGN+.46,.9,t,'S');
       if(code==='14'){ const m=new THREE.Group(); m.position.set(cx,h,3.5); g.add(m); box(.06,.12,.06,VM.trim,0,0,0,m);
         const cv=new THREE.Mesh(new THREE.CylinderGeometry(1.1,1.1,.3,24,1,true,-.3,.6),new THREE.MeshStandardMaterial({color:0x0b1220,emissive:0x2c4f7a,emissiveIntensity:.8,side:THREE.DoubleSide})); cv.position.set(0,.28,-1.1); cv.userData.noAO=true; m.add(cv); }
-      else if(code==='16') prod(g,'laptop',cx,h,3.5,1,0);
-      else { prod(g,'chip',cx-.18,h,3.48,2); prod(g,'ecu',cx+.18,h,3.48,.7); }
+      else { prod(g,'ecu',cx-.18,h,3.48,.8); prod(g,'laptop',cx+.2,h,3.5,.8,0); }
       screenOn(g,1.2,.68,cx,1.6,WGN+.04,0,a,b); headerSign(g,code,a+' · '+b,t,cx,2.17,WGN+.02,'S',1.1); },
     {zone:[cx-.66,WGN,cx+.66,4.15],face:'S',ay:2.6}); });
-/* 18 · X domain and gateway – 2WP · Next-gen powertrain (ICE) 2-wheeler – 240 × 70 cm table on the west wall */
-station('18','E','X domain and gateway – 2WP · Next-gen powertrain (ICE) 2-wheeler',19.26,8.22,19.96,10.62,'240 × 70 cm table · 2 wall screens','0.9 m table · screens at 1.2–1.9 m',
-  'Station 18 covers two-wheeler topics on one 240 × 70 cm Bosch table against the west wall of the wing: the X-domain controller and gateway for 2-wheelers (2WP), and the next-generation ICE powertrain for 2-wheelers. One screen above each half.',
+/* 17 · X domain and gateway – 2WP · Next-gen powertrain (ICE) 2-wheeler – 240 × 70 cm table on the west wall */
+station('17','E','X domain and gateway – 2WP · Next-gen powertrain (ICE) 2-wheeler',19.26,8.22,19.96,10.62,'240 × 70 cm table · 2 wall screens','0.9 m table · screens at 1.2–1.9 m',
+  'Station 17 covers two-wheeler topics on one 240 × 70 cm Bosch table against the west wall of the wing: the X-domain controller and gateway for 2-wheelers (2WP), and the next-generation ICE powertrain for 2-wheelers. One screen above each half.',
   g=>{ const h=counter(g,19.26,8.22,19.96,10.62,.9,'E','E'); prod(g,'ecu',19.6,h,8.65,1,Math.PI/2); prod(g,'box',19.6,h,9.15,.7,Math.PI/2); prod(g,'ecu',19.6,h,9.75,.9,Math.PI/2); prod(g,'motor',19.6,h,10.25,.8,Math.PI/2);
     [[8.8,'X domain · gateway','2-wheeler'],[10.05,'Powertrain ICE','2-wheeler']].forEach(([z,a,b])=>screenOn(g,1.0,.56,19.3,1.6,z,Math.PI/2,a,b));
-    headerSign(g,'18','2-wheeler · gateway & powertrain','E',19.29,2.17,9.42,'E',1.4); },
+    headerSign(g,'17','2-wheeler · gateway & powertrain','E',19.29,2.17,9.42,'E',1.4); },
   {zone:[19.26,8.0,20.3,10.85],face:'E',ay:2.6});
 
 /* door landing kept clear (green) */
@@ -1990,29 +1988,43 @@ station('18','E','X domain and gateway – 2WP · Next-gen powertrain (ICE) 2-wh
 
 /* ============ ETAS on the public floor, in front of the research wing (north wall) ============ */
 (function(){ const g=new THREE.Group(); GX.add(g); const WZ=3.02, FZ=0;
-  const fl=new THREE.Mesh(new THREE.PlaneGeometry(7.9,2.9).rotateX(-Math.PI/2),new THREE.MeshBasicMaterial({color:THEME.T.c,transparent:true,opacity:.08,depthWrite:false,polygonOffset:true,polygonOffsetFactor:-2}));
-  fl.position.set(23.0,.012,1.55); fl.userData.noAO=true; fl.renderOrder=1; g.add(fl);
-  const fe=new THREE.LineSegments(new THREE.EdgesGeometry(new THREE.PlaneGeometry(7.9,2.9).rotateX(-Math.PI/2)),new THREE.LineDashedMaterial({color:THEME.T.c,dashSize:.22,gapSize:.14,transparent:true,opacity:.75}));
-  fe.position.set(23.0,.014,1.55); fe.computeLineDistances(); g.add(fe);
+  const fl=new THREE.Mesh(new THREE.PlaneGeometry(7.0,2.9).rotateX(-Math.PI/2),new THREE.MeshBasicMaterial({color:THEME.T.c,transparent:true,opacity:.08,depthWrite:false,polygonOffset:true,polygonOffsetFactor:-2}));
+  fl.position.set(23.1,.012,1.55); fl.userData.noAO=true; fl.renderOrder=1; g.add(fl);
+  const fe=new THREE.LineSegments(new THREE.EdgesGeometry(new THREE.PlaneGeometry(7.0,2.9).rotateX(-Math.PI/2)),new THREE.LineDashedMaterial({color:THEME.T.c,dashSize:.22,gapSize:.14,transparent:true,opacity:.75}));
+  fe.position.set(23.1,.014,1.55); fe.computeLineDistances(); g.add(fe);
   /* logo on the wing wall */
   const tex=new THREE.TextureLoader().load('data:image/png;base64,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'); tex.colorSpace=THREE.SRGBColorSpace; tex.anisotropy=8;
   const logo=new THREE.Mesh(new THREE.PlaneGeometry(2.2,2.2*139/508),new THREE.MeshStandardMaterial({map:tex,transparent:true,roughness:.4,alphaTest:.05}));
   logo.position.set(22.7,2.18,WZ-.012); logo.rotation.y=Math.PI; logo.userData.noAO=true; g.add(logo);
-  const items=[['ET1',19.6,20.8,'Cybersecurity AIS 189/190 + regulatory compliance tools','table 2.5 × 2.5 × 3 ft (0.76 × 0.76 × 0.91 m) · 1.2 m wall run','0.91 m table · 3 screens + internet',3,'Cybersecurity','Three rows of the list combined: Cybersecurity (AIS 189, 190) from ETAS / M/TEL and ETAS cybersecurity tools & solutions for regulatory compliance for Indian OEMs.'],
-    ['ET2',21.25,22.16,'AI Coder','3 × 2.5 × 3 ft (0.91 × 0.76 × 0.91 m)','0.91 m · 1 screen + internet',1,'AI Coder','AI-assisted code generation for automotive software.'],
-    ['ET3',22.61,23.52,'SCORE demo – integrated SOVD','3 × 2.5 × 3 ft (0.91 × 0.76 × 0.91 m)','0.91 m · 2 screens + internet',2,'SCORE · SOVD','Service-oriented vehicle diagnostics (SOVD) integrated in SCORE.'],
-    ['ET4',23.97,25.8,'AI based measurement & calibration for SDVs','6 × 2.5 × 3 ft (1.83 × 0.76 × 0.91 m)','0.91 m · 4 screens + internet',4,'AI calibration','AI-based measurement and calibration for software-defined vehicles.']];
-  items.forEach(([code,x0,x1,name,dims,ht,n,short,desc])=>{ const gg=new THREE.Group(); g.add(gg);
-    const w=x1-x0, cx=(x0+x1)/2, z0=WZ-.76;
-    box(w,.87,.76,MATS.white,cx,FZ,z0+.38,gg); box(w+.03,.04,.79,MATS.quartz,cx,FZ+.87,z0+.38,gg); box(w-.02,.07,.74,MATS.dark,cx,FZ,z0+.38,gg);
-    box(w,.09,.012,exMat(THEME.T.c),cx,FZ+.72,z0-.006,gg); prod(gg,'laptop',cx,FZ+.91,z0+.35,1,Math.PI);
-    const cols=code==='ET1'?3:Math.min(n,2), sw=code==='ET1'?.38:Math.min(.8,(w-.06*(cols-1))/cols), sh=sw*.5625, rows=Math.ceil(n/cols);
-    for(let i=0;i<n;i++){ const r=Math.floor(i/cols), c=i%cols, xx=cx-((cols-1)*(sw+.06))/2+c*(sw+.06);
-      screen(gg,sw,sh,xx,1.1+r*(sh+.05)+sh/2+.03,WZ-.03,Math.PI,short,'ETAS'); }
-    headerSign(gg,code,short,'T',cx,FZ+1.0,z0-.01,'N',Math.min(.9,w)).position.y=.98;
-    EXTRA_COL0.push({x0,z0:z0,x1,z1:WZ}); shadowify(gg);
-    exReg(code,'T','ETAS · '+name,gg,dims,ht,desc+' Shown on the public floor in front of the research wing, below the ETAS logo. Size from the exhibit list.',{pub:true,ay:2.75,az:WZ-.4}); });
+  /* three Bosch tables against the outside of the wing's north wall, sizes from the plan */
+  const items=[['ET1',20.1,21.0,'SCORE demo','90 × 75 cm table',1,'SCORE demo','Software-defined vehicle diagnostics and services demo on SCORE.'],
+    ['ET2',22.31,23.06,'Cyber security solutions','75 × 75 cm table',1,'Cyber security','ETAS cyber security tools and solutions, including regulatory compliance (AIS 189/190) for Indian OEMs.'],
+    ['ET3',24.27,26.07,'AI based measurement','180 × 75 cm table',2,'AI measurement','AI-based measurement and calibration for software-defined vehicles.']];
+  items.forEach(([code,x0,x1,name,dims,n,short,desc])=>{ const gg=new THREE.Group(); g.add(gg);
+    const w=x1-x0, cx=(x0+x1)/2, z0=WZ-.75, h=counter(gg,x0,z0,x1,WZ,.9,'T','N');
+    prod(gg,'laptop',cx,h,z0+.38,1,Math.PI);
+    const sw=n>1?Math.min(.8,(w-.1)/n):Math.min(.85,w), sh=sw*.5625;
+    for(let i=0;i<n;i++){ const xx=cx-((n-1)*(sw+.08))/2+i*(sw+.08); screen(gg,sw,sh,xx,1.15+sh/2+.03,WZ-.03,Math.PI,short,'ETAS'); }
+    headerSign(gg,code,short,'T',cx,1.05,z0-.012,'N',Math.min(.9,w)).position.y=1.98;
+    EXTRA_COL0.push({x0,z0,x1,z1:WZ}); shadowify(gg);
+    exReg(code,'T','ETAS · '+name,gg,dims+' · '+n+(n>1?' screens':' screen'),'0.9 m table',desc+' On the public floor in front of the research wing, below the ETAS logo. Size from the plan.',{pub:true,ay:2.75,az:WZ-.4}); });
   shadowify(g);
+})();
+
+/* ============ MPS on the public floor (south-west corner, beside the truck) ============ */
+(function(){ const g=new THREE.Group(); GX.add(g);
+  const wall=box(5.9,2.4,.28,BT.body,3.0,0,18.86,g); box(5.92,.08,.3,exMat(0x1c1f24,{r:.5}),3.0,2.4,18.86,g);
+  const gt=(()=>{ const c=document.createElement('canvas'); c.width=1024; c.height=256; const x=c.getContext('2d'); x.fillStyle='#ffffff'; x.fillRect(0,0,1024,256);
+    x.fillStyle='#1c1f24'; x.font='800 150px Inter,system-ui,Arial'; x.textBaseline='middle'; x.fillText('MPS',60,135); x.fillStyle='#e20015'; x.fillRect(60,222,300,10);
+    const t=new THREE.CanvasTexture(c); t.colorSpace=THREE.SRGBColorSpace; t.anisotropy=8; return t; })();
+  const p=new THREE.Mesh(new THREE.PlaneGeometry(1.6,.4),new THREE.MeshStandardMaterial({map:gt,roughness:.5})); p.position.set(.95,1.95,18.715); p.rotation.y=Math.PI; p.userData.noAO=true; g.add(p);
+  const h=counter(g,1.82,18.0,4.22,18.7,.9,'X','N'); prod(g,'laptop',2.6,h,18.35,1,Math.PI); prod(g,'ecu',3.5,h,18.35,1);
+  screen(g,1.4,.79,3.02,1.62,18.69,Math.PI,'MPS','Bosch');
+  const fl=new THREE.Mesh(new THREE.PlaneGeometry(5.6,1.5).rotateX(-Math.PI/2),new THREE.MeshBasicMaterial({color:0x1c1f24,transparent:true,opacity:.08,depthWrite:false,polygonOffset:true,polygonOffsetFactor:-2}));
+  fl.position.set(3.0,.012,17.95); fl.userData.noAO=true; fl.renderOrder=1; g.add(fl);
+  EXTRA_COL0.push({x0:.05,z0:18.72,x1:5.95,z1:19.0},{x0:1.82,z0:18.0,x1:4.22,z1:18.72}); shadowify(g);
+  exReg('MPS','X','MPS – public floor',g,'240 × 70 cm Bosch table · back wall ≈ 5.9 m','0.9 m table · 2.4 m back wall · 1 screen',
+    'New on the plan: an MPS exhibit on the public exhibition floor in the south-west corner, beside the concept truck – a 240 × 70 cm Bosch table with a screen, in front of a back wall along the stall edge. The plan draws the wall as a long thin strip; its height is assumed.',{pub:true,ay:2.8,ax:3.0,az:18.3});
 })();
 
 /* ============ In-line pump on the public floor (corner beside the motorcycle) ============ */
@@ -2036,7 +2048,7 @@ station('18','E','X domain and gateway – 2WP · Next-gen powertrain (ICE) 2-wh
   addPerson(gPeople0,14.28,FY+.08,16.4,fa(-1,0),'seat','exec',0,.1,false);   // in the AI cockpit (driver seat)
   P(16.6,15.6,fa(-1,.3),'talk','staff',.2); P(18.0,17.3,fa(0,1),'folded','exec',0);
   P(21.1,13.9,fa(-1,0),'talk','staff',.1); P(23.2,9.6,fa(1,.2),'stand','exec',0);
-  P(21.2,6.4,fa(1,0),'point','exec',.1); P(24.0,6.4,fa(-1,0),'talk','staff',0); P(25.3,4.95,fa(.4,-1),'stand','exec',0);
+  P(19.95,6.9,fa(1,-.3),'talk','staff',0); P(25.3,4.95,fa(.4,-1),'stand','exec',0);
 })();
 /* ============================ Performance: merge static meshes ============================
    Every small box of the fit-out was its own draw call (and drawn again for shadows and ambient occlusion).
@@ -2336,14 +2348,13 @@ const SVN=[ // viewpoints [id,x,z,label]
   ['door',13.6,13.6,'Entrance'],['k1',15.3,15.2,'Station 1 · AI-powered cockpit'],['k2',18.0,16.95,'Station 2 · pHUD'],['k3',20.67,17.4,'Station 3 · Gaming on wheels'],
   ['k4',22.95,17.55,'Station 4 · Frictionless payment'],['k7',22.85,16.85,'Station 7 · Scalable ADAS'],['k8',22.85,15.68,'Station 8 · Advanced VMM'],['k9',22.85,14.03,'Station 9 · Accident research'],
   ['k6',20.6,15.58,'Station 6 · ADAS CV manoeuvring'],['k5',20.6,14.33,'Station 5 · ADAS CV driving'],['a4',17.2,15.0,'Hall centre'],['a1',17.5,13.0,'North aisle'],['a2',20.6,12.9,'Into the wing'],
-  ['a3',22.45,12.6,'Into the wing'],['k10',22.4,10.56,'Station 10 · V2X'],['w0',22.4,8.5,'Wing south'],['k18',20.75,9.42,'Station 18 · 2-wheeler'],
-  ['k11',25.6,7.75,'Station 11 · Suspension'],['w1',24.0,8.3,'Wing east'],['k12',25.0,6.62,'Station 12 · X-in-1'],['k15',25.05,5.05,'Station 15 · Semiconductors & sensors'],
-  ['k13e',24.2,6.4,'Station 13 · HPC cockpit side'],['k13w',21.05,6.4,'Station 13 · Core compute side'],['k14',22.9,4.6,'Station 14 · Virtualization'],
-  ['k16',21.36,4.6,'Station 16 · S score + Google SDV'],['k17',19.92,4.6,'Station 17 · Micrologix']];
+  ['a3',22.45,12.6,'Into the wing'],['k10',22.4,10.56,'Station 10 · V2X'],['w0',22.4,8.5,'Wing south'],
+  ['k11',25.6,7.75,'Station 11 · Suspension'],['w1',24.0,8.3,'Wing east'],['k12',25.0,6.62,'Station 12 · X-in-1'],['k13',25.05,5.05,'Station 13 · Semiconductors & sensors'],
+  ['k16e',24.2,6.4,'Station 16 · HPC cockpit side'],['k16w',21.05,6.4,'Station 16 · S score + Google SDV side'],['k14',22.79,4.6,'Station 14 · Virtualization'],
+  ['k15',20.62,4.6,'Station 15 · BEG'],['k17',20.75,9.42,'Station 17 · 2-wheeler']];
 /* stations in visitor-loop order: [code, viewpoint, look-at x, z] */
 const SV_ST=[['1','k1',13.4,16.8],['2','k2',17.99,18.3],['3','k3',20.67,18.5],['4','k4',23.11,18.5],['7','k7',23.95,17.33],['8','k8',24.0,15.68],['6','k6',19.7,15.58],
-  ['9','k9',24.0,14.03],['5','k5',19.7,14.33],['10','k10',23.8,10.56],['11','k11',25.96,8.55],['12','k12',26.37,6.62],['15','k15',26.0,4.0],['13','k13e',23.1,6.4],
-  ['14','k14',22.9,3.5],['16','k16',21.36,3.5],['17','k17',19.92,3.5],['18','k18',19.6,9.42]];
+  ['9','k9',24.0,14.03],['5','k5',19.7,14.33],['10','k10',23.8,10.56],['11','k11',25.96,8.55],['12','k12',26.37,6.62],['13','k13',26.0,4.0],['16','k16e',23.1,6.4],['14','k14',22.79,3.5],['15','k15',20.62,3.5],['17','k17',19.6,9.42]];
 const SV={on:false,node:'door',yaw:Math.PI/2,pitch:-.2,fov:75,glide:null,hover:null,cur:-1,dragged:false};
 const svIdx={}; SVN.forEach((n,i)=>svIdx[n[0]]=i);
 /* links: viewpoints within 3.4 m that can be walked between without touching anything */
